@@ -1,0 +1,25 @@
+[
+  {
+    "id": "1774448345144",
+    "title": "set 1",
+    "price": 8300,
+    "discountPrice": null,
+    "category": "Pendant Sets",
+    "image": "./images/1774448345116-pendent set 1.png"
+  },
+  {
+    "id": "1774533925851",
+    "title": "set 2",
+    "sku": "SKU-5851",
+    "price": 265600,
+    "costPrice": 0,
+    "discountPrice": null,
+    "stock": 2,
+    "category": "Pendant Sets",
+    "description": "This elegant artificial pendant set features striking deep purple oval stones framed by a radiant leaf-shaped halo of white crystals. A sophisticated, high-fashion accessory perfect for adding a royal touch to any outfit.",
+    "images": [
+      "./images/1774533925833-pendent-set-2.png"
+    ],
+    "image": "./images/1774533925833-pendent-set-2.png"
+  }
+]

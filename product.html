@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details | The Zewar Boutique</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="pdp-body">
+    <!-- Navigation (Copied from index.html for consistency) -->
+    <nav class="navbar scrolled" style="background: rgba(13, 27, 17, 0.98);">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <span style="color:var(--secondary-color); font-family:'Playfair Display'; font-size:1.8rem; font-style:italic;">Zewar.</span>
+            </a>
+            <div class="menu-toggle" id="mobile-menu">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html#home" class="nav-links">Home</a></li>
+                <li><a href="index.html#collections" class="nav-links">Collections</a></li>
+                <li><a href="index.html#about" class="nav-links">About Us</a></li>
+                <li><a href="shop.html" class="nav-links">Shop All</a></li>
+                <li class="nav-icons" style="margin-left: 1.5rem; display: flex; gap: 18px; align-items: center;">
+                    <a href="#" class="nav-icon auth-icon-trigger" title="Login"><i class="fas fa-user" style="color:#fff; font-size:1.1rem;"></i></a>
+                    <a href="shop.html" class="nav-icon" title="Search"><i class="fas fa-search" style="color:#fff; font-size:1.1rem;"></i></a>
+                    <a href="#" class="nav-icon cart-icon-trigger" title="Cart"><i class="fas fa-shopping-cart" style="color:#fff; font-size:1.1rem;"></i></a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <main class="pdp-container">
+        <!-- Split Layout -->
+        <div class="pdp-split">
+            <!-- Left: Visuals -->
+            <div class="pdp-left">
+                <div class="pdp-gallery-sticky">
+                    <div class="pdp-main-image-container" id="zoom-container">
+                        <img src="https://images.unsplash.com/photo-1599643477877-530eb83abc8e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="Main Product" id="main-product-img">
+                    </div>
+                    <div class="pdp-thumbnails">
+                        <img src="https://images.unsplash.com/photo-1599643477877-530eb83abc8e?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" class="pdp-thumb active" onclick="changeMainImage(this)" alt="Thumbnail 1">
+                        <img src="https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" class="pdp-thumb" onclick="changeMainImage(this)" alt="Macro Shot">
+                        <img src="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" class="pdp-thumb" onclick="changeMainImage(this)" alt="Lifestyle Shot">
+                        <img src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" class="pdp-thumb" onclick="changeMainImage(this)" alt="Scale Reference">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Details -->
+            <div class="pdp-right">
+                <div class="pdp-info">
+                    <p class="pdp-category">Necklaces</p>
+                    <h1 class="pdp-title">Royal Emerald Kundan Choker</h1>
+                    <div class="pdp-price">₹24,999</div>
+                    
+                    <p class="pdp-description">
+                        This breathtaking piece features intricate Kundan craftsmanship accented with deep emerald green stones. Designed to sit perfectly on the collarbone, it brings an immediate sense of regal elegance to any attire. Handcrafted for the modern royalty.
+                    </p>
+
+                    <button class="btn btn-primary pdp-add-cart" onclick="addToCart('pdp-01', 'Royal Emerald Kundan Choker', 299.00, 'https://images.unsplash.com/photo-1599643477877-530eb83abc8e?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80')">Add to Cart</button>
+
+                    <!-- Accordions -->
+                    <div class="accordion-container">
+                        <div class="accordion-item">
+                            <button class="accordion-header">
+                                <span>Product Details</span>
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <div class="accordion-content">
+                                <ul>
+                                    <li><strong>Material:</strong> Premium Brass Alloy with Gold Plating</li>
+                                    <li><strong>Stones:</strong> AAA Grade Cubic Zirconia & Faux Emeralds</li>
+                                    <li><strong>Dimensions:</strong> 14" length with adjustable thread</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <button class="accordion-header">
+                                <span>Jewelry Care</span>
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <div class="accordion-content">
+                                <p>To maintain the shine, keep away from moisture, perfumes, and harsh chemicals. Store in the provided velvet pouch when not in use. Gently wipe with a soft cloth after wearing.</p>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <button class="accordion-header">
+                                <span>Shipping & Returns</span>
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <div class="accordion-content">
+                                <p>Standard shipping takes 3-5 business days. Exchanges accepted within 14 days of delivery provided the item is unworn and in original packaging.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Cross Selling -->
+        <div class="cross-sell-section">
+            <h2 class="section-title">Complete The Look</h2>
+            <div class="carousel-container" id="cross-sell-carousel">
+                <div class="carousel-track">
+                    <div class="carousel-card">
+                        <img src="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Earrings">
+                        <h3 style="margin-top:15px; font-size:1.1rem;">Emerald Drop Earrings</h3>
+                        <p style="color:#666; margin-top:5px; margin-bottom:15px;">₹6,499</p>
+                        <button class="btn btn-primary" style="padding: 8px 15px; font-size:0.9rem; width:100%; border:none;" onclick="addToCart('cs-01', 'Emerald Drop Earrings', 89.00, 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908')">Add to Cart</button>
+                    </div>
+                    <div class="carousel-card">
+                        <img src="https://images.unsplash.com/photo-1611591437281-460bfbe1220a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Bangles">
+                        <h3 style="margin-top:15px; font-size:1.1rem;">Gold Plated Bangles</h3>
+                        <p style="color:#666; margin-top:5px; margin-bottom:15px;">₹8,999</p>
+                        <button class="btn btn-primary" style="padding: 8px 15px; font-size:0.9rem; width:100%; border:none;" onclick="addToCart('cs-02', 'Gold Plated Bangles', 129.00, 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a')">Add to Cart</button>
+                    </div>
+                    <div class="carousel-card">
+                        <img src="https://images.unsplash.com/photo-1605100804763-247f67b2548e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Rings">
+                        <h3 style="margin-top:15px; font-size:1.1rem;">Emerald Solitaire Ring</h3>
+                        <p style="color:#666; margin-top:5px; margin-bottom:15px;">₹12,499</p>
+                        <button class="btn btn-primary" style="padding: 8px 15px; font-size:0.9rem; width:100%; border:none;" onclick="addToCart('cs-03', 'Emerald Solitaire Ring', 149.00, 'https://images.unsplash.com/photo-1605100804763-247f67b2548e')">Add to Cart</button>
+                    </div>
+                    <div class="carousel-card">
+                        <img src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Bracelet">
+                        <h3 style="margin-top:15px; font-size:1.1rem;">Delicate Gold Bracelet</h3>
+                        <p style="color:#666; margin-top:5px; margin-bottom:15px;">₹7,499</p>
+                        <button class="btn btn-primary" style="padding: 8px 15px; font-size:0.9rem; width:100%; border:none;" onclick="addToCart('cs-04', 'Delicate Gold Bracelet', 99.00, 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338')">Add to Cart</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer (Copied from index.html) -->
+    <footer id="contact" class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <h2>The Zewar Boutique</h2>
+                <p>Elevating your style with premium artificial jewellery.</p>
+            </div>
+            <div class="footer-links">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="index.html#home">Home</a></li>
+                    <li><a href="shop.html">Shop All</a></li>
+                    <li><a href="index.html#about">About</a></li>
+                </ul>
+            </div>
+            <div class="footer-social">
+                <h3>Connect With Us</h3>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-pinterest-p"></i></a>
+                </div>
+                <p class="contact-email">hello@zewarboutique.com</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 The Zewar Boutique. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

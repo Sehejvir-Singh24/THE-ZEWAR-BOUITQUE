@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zewar Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="dark-mode">
+    <div id="login-screen" class="screen">
+        <div class="login-box">
+            <i class="fas fa-gem" style="font-size:3rem; color:var(--accent); margin-bottom:1rem;"></i>
+            <h2>Zewar Command Center</h2>
+            <input type="password" id="admin-password" placeholder="Enter Password (zewar123)" onkeydown="if(event.key==='Enter') login()">
+            <button onclick="login()">Access Secure Panel</button>
+            <p id="login-error" style="color:var(--danger); display:none; margin-top:10px;">Access Denied. Incorrect password.</p>
+        </div>
+    </div>
+
+    <div id="admin-dashboard" class="screen" style="display:none;">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-crown" style="color:var(--accent);"></i> Zewar Admin</h2>
+            </div>
+            <ul class="nav-links">
+                <li class="active" onclick="switchTab('dashboard', event)"><i class="fas fa-chart-line"></i> Dashboard</li>
+                <li onclick="switchTab('products', event)"><i class="fas fa-box-open"></i> Products</li>
+                <li onclick="switchTab('orders', event)"><i class="fas fa-shopping-cart"></i> Orders</li>
+                <li onclick="switchTab('customers', event)"><i class="fas fa-users"></i> Customers</li>
+                <li onclick="switchTab('promotions', event)"><i class="fas fa-tag"></i> Promotions</li>
+            </ul>
+            <div class="sidebar-footer">
+                <a href="index.html" target="_blank" class="btn-outline"><i class="fas fa-external-link-alt"></i> View Store</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <div style="display:flex; align-items:center; gap: 20px;">
+                    <h1 id="page-title">Dashboard Overview</h1>
+                    <button class="btn btn-primary" onclick="window.openPOSModal()" style="font-weight:bold; font-size: 0.9rem; padding: 8px 15px;"><i class="fas fa-cash-register"></i> Manual Order (POS)</button>
+                </div>
+                <div class="user-profile">Admin Portal <i class="fas fa-user-circle" style="font-size:1.5rem; margin-left:10px;"></i></div>
+            </header>
+
+            <div class="content-wrapper">
+                
+                <!-- TAB: DASHBOARD -->
+                <section id="tab-dashboard" class="tab-pane active">
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <i class="fas fa-dollar-sign bg-green"></i>
+                            <div><p>Total Revenue</p><h3 id="kpi-revenue">₹0</h3></div>
+                        </div>
+                        <div class="kpi-card">
+                            <i class="fas fa-shopping-bag bg-blue"></i>
+                            <div><p>Active Orders</p><h3 id="kpi-orders">0</h3></div>
+                        </div>
+                        <div class="kpi-card">
+                            <i class="fas fa-chart-pie bg-purple"></i>
+                            <div><p>Total Sales</p><h3 id="kpi-sales">0</h3></div>
+                        </div>
+                        <div class="kpi-card">
+                            <i class="fas fa-exclamation-triangle bg-red"></i>
+                            <div><p>Low Stock Alerts</p><h3 id="kpi-lowstock">0</h3></div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <h3><i class="fas fa-chart-bar"></i> Sales Trends (Monthly)</h3>
+                        <div style="height: 300px; width: 100%; margin-top:20px;">
+                            <canvas id="salesChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: PRODUCTS -->
+                <section id="tab-products" class="tab-pane">
+                    <div class="card-header">
+                        <h2>Inventory Management</h2>
+                        <button class="btn btn-accent" onclick="document.getElementById('product-modal').style.display='flex'">+ Add New Product</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr><th>Image</th><th>Details</th><th>SKU</th><th>Stock</th><th>Price</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody id="products-tbody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- TAB: ORDERS -->
+                <section id="tab-orders" class="tab-pane">
+                    <div class="card-header"><h2>Order Fulfillment Tracking</h2></div>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr><th>Order ID</th><th>Date</th><th>Customer</th><th>Source</th><th>Payment Mode</th><th>Total</th><th>Status</th><th>Fulfillment</th><th>Tracking</th></tr>
+                            </thead>
+                            <tbody id="orders-tbody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- TAB: CUSTOMERS -->
+                <section id="tab-customers" class="tab-pane">
+                    <div class="card-header"><h2>Customer Directory (CRM)</h2></div>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr><th>Name</th><th>Email</th><th>Phone</th><th>Lifetime Spend</th><th>Total Orders</th></tr>
+                            </thead>
+                            <tbody id="customers-tbody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- TAB: PROMOTIONS -->
+                <section id="tab-promotions" class="tab-pane">
+                    <div class="card-header">
+                        <h2>Promo Codes</h2>
+                        <button class="btn btn-accent" onclick="document.getElementById('promo-modal').style.display='flex'">+ Create Promo</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr><th>Code</th><th>Discount Type</th><th>Amount</th><th>Min Spend</th><th>Expiry Date</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody id="promos-tbody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- POS MODAL OVERLAY -->
+    <div id="pos-modal-overlay" class="modal-overlay" onclick="closePOSModal()"></div>
+    <div id="pos-modal" class="modal" style="display:none; position:fixed; z-index:100; left:50%; top:50%; transform:translate(-50%,-50%); width:90%; max-width:650px; max-height:85vh; overflow-y:auto; padding:2rem; background:var(--bg-card); border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid #333; padding-bottom:1rem;">
+            <h2 style="color:var(--secondary-color);"><i class="fas fa-cash-register"></i> Omnichannel POS Entry</h2>
+            <button class="btn-close" onclick="closePOSModal()">&times;</button>
+        </div>
+        
+        <div class="form-group" style="margin-bottom:15px;">
+            <label>Customer Selection</label>
+            <select id="pos-customer" class="admin-input" style="width:100%; border:1px solid #444; background:#111; color:#fff; padding:10px;">
+                <option value="walk_in">Walk-in Customer (Create Offline Profile)</option>
+            </select>
+        </div>
+        <div id="pos-new-customer-fields" style="display:flex; gap:10px; margin-bottom:1rem;">
+            <input type="text" id="pos-new-cname" class="admin-input" placeholder="Customer Name (Offline)" style="flex:1;">
+            <input type="text" id="pos-new-cphone" class="admin-input" placeholder="Phone Number (Optional)" style="flex:1;">
+        </div>
+        
+        <div class="form-group" style="margin-top:2rem; border-top:1px solid #333; padding-top:1.5rem; margin-bottom:15px;">
+            <label>Select Inventory Item (Real-Time Synchronized)</label>
+            <select id="pos-product" class="admin-input" onchange="posProductSelected()" style="width:100%; border:1px solid #444; background:#111; color:#fff; padding:10px;">
+            </select>
+        </div>
+        <div style="display:flex; gap:10px; margin-bottom:1rem;">
+            <div class="form-group" style="flex:1;">
+                <label>Quantity Extracted</label>
+                <input type="number" id="pos-qty" class="admin-input" value="1" min="1" style="width:100%;">
+            </div>
+            <div class="form-group" style="flex:1;">
+                <label>Price Override (₹)</label>
+                <input type="number" id="pos-price" class="admin-input" placeholder="Custom Discounted Amount" style="width:100%;">
+            </div>
+        </div>
+        
+        <div class="form-group" style="margin-top:1.5rem; margin-bottom:15px;">
+            <label>Payment Mode Completed</label>
+            <select id="pos-payment" class="admin-input" style="width:100%; border:1px solid #444; background:#111; color:#fff; padding:10px;">
+                <option>Cash Transaction</option>
+                <option>Direct UPI QR Code</option>
+                <option>Bank Transfer (NEFT/RTGS)</option>
+                <option>Card POS Terminal</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom:15px;">
+            <label>Fulfillment Milestone</label>
+            <select id="pos-fulfillment" class="admin-input" style="width:100%; border:1px solid #444; background:#111; color:#fff; padding:10px;">
+                <option>Handed Over in Person</option>
+                <option>Ready for Pickup</option>
+                <option>Shipped via Courier</option>
+            </select>
+        </div>
+        
+        <button class="btn btn-primary" style="width:100%; margin-top:2rem; padding:15px; font-size:1.1rem; letter-spacing:1px; text-transform:uppercase;" onclick="submitPOSOrder()">Finalize & Deduct Stock</button>
+    </div>
+
+    <!-- Modals -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="this.parentElement.parentElement.style.display='none'">&times;</span>
+            <h2>Create New Product</h2>
+            <form id="add-product-form">
+                <div class="form-row"><div class="form-group"><label>Product Title</label><input type="text" id="p-title" required></div><div class="form-group"><label>SKU (Optional)</label><input type="text" id="p-sku"></div></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Category</label><select id="p-category"><option>Necklaces</option><option>Earrings</option><option>Bangles & Bracelets</option><option>Pendant Sets</option><option>Rings</option></select></div>
+                    <div class="form-group"><label>Stock Quantity</label><input type="number" id="p-stock" required min="0"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Selling Price ($)</label><input type="number" step="0.01" id="p-price" required></div>
+                    <div class="form-group"><label>Cost Price ($)</label><input type="number" step="0.01" id="p-cost"></div>
+                    <div class="form-group"><label>Discount Price</label><input type="number" step="0.01" id="p-discount"></div>
+                </div>
+                <div class="form-group"><label>Full Description</label><textarea id="p-desc" rows="4"></textarea></div>
+                <div class="form-group"><label>Upload High-Res Images</label><input type="file" id="p-images" multiple accept="image/*"></div>
+                <button type="submit" class="btn btn-accent w-100">Save Product into Inventory</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Quick Edit Modal -->
+    <div id="edit-product-modal" class="modal">
+        <div class="modal-content" style="max-width:500px;">
+            <span class="close" onclick="this.parentElement.parentElement.style.display='none'">&times;</span>
+            <h2 style="color:var(--secondary-color); margin-bottom: 1.5rem;"><i class="fas fa-edit"></i> Quick Edit Inventory</h2>
+            <form id="edit-product-form">
+                <input type="hidden" id="edit-p-id">
+                <div class="form-group">
+                    <label>Current Stock Quantity</label>
+                    <input type="number" id="edit-p-stock" class="admin-input" required min="0">
+                </div>
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <div class="form-group" style="flex:1;">
+                        <label>Base Price (₹)</label>
+                        <input type="number" id="edit-p-price" class="admin-input" required min="0">
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label>Discount Price (₹)</label>
+                        <input type="number" id="edit-p-discount" class="admin-input" min="0" placeholder="Optional">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top:20px;">
+                    <label>Append Additional Images to Gallery</label>
+                    <input type="file" id="edit-p-images" class="admin-input" multiple accept="image/*">
+                </div>
+                <button type="submit" class="btn btn-primary w-100" style="margin-top:2rem; padding:12px; text-transform:uppercase; letter-spacing:1px; font-weight:bold;">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="promo-modal" class="modal">
+        <div class="modal-content" style="max-width:400px;">
+            <span class="close" onclick="this.parentElement.parentElement.style.display='none'">&times;</span>
+            <h2>Generate Promo Code</h2>
+            <form id="add-promo-form">
+                <div class="form-group"><label>Discount Code (e.g. ZEWAR10)</label><input type="text" id="pr-code" required style="text-transform:uppercase;"></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Discount Type</label><select id="pr-type"><option value="percentage">Percentage (%)</option><option value="flat">Flat Amount ($)</option></select></div>
+                    <div class="form-group"><label>Value</label><input type="number" id="pr-value" required></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Min Spend ($)</label><input type="number" id="pr-min"></div>
+                    <div class="form-group"><label>Expiry Date</label><input type="date" id="pr-expiry" required></div>
+                </div>
+                <button type="submit" class="btn btn-accent w-100">Activate Promo</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

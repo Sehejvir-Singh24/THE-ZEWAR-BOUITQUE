@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Checkout | The Zewar Boutique</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body style="background:#fcfcfc;">
+    <!-- Minimal Header -->
+    <nav class="navbar scrolled" style="background: var(--bg-dark); border-bottom:1px solid #222;">
+        <div class="nav-container" style="justify-content:center;">
+            <a href="index.html" class="logo" style="text-decoration:none;"><span style="color:var(--secondary-color); font-family:'Playfair Display'; font-size:2rem; font-style:italic;">Zewar.</span></a>
+        </div>
+    </nav>
+
+    <main class="checkout-wrapper">
+        <div class="checkout-grid">
+            
+            <!-- Left Column: Forms -->
+            <div class="checkout-left">
+                <div class="checkout-express-login">
+                    Already have an account? <a href="#" style="color:var(--secondary-color); font-weight:bold; text-decoration:none;">Log in for faster checkout</a>
+                </div>
+
+                <div class="checkout-section">
+                    <h2 class="checkout-heading">Contact Information</h2>
+                    <div class="form-row">
+                        <div class="form-group w-100">
+                            <input type="email" id="chk-email" class="checkout-input" placeholder="Email Address" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group w-100">
+                            <input type="tel" id="chk-phone" class="checkout-input" placeholder="Mobile Number (For Delivery Updates)" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="checkout-section">
+                    <h2 class="checkout-heading">Shipping Address</h2>
+                    <div class="form-row">
+                        <div class="form-group"><input type="text" id="chk-fname" class="checkout-input" placeholder="First Name" required></div>
+                        <div class="form-group"><input type="text" id="chk-lname" class="checkout-input" placeholder="Last Name" required></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group w-100"><input type="text" id="chk-street" class="checkout-input" placeholder="Street Address" required></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group w-100"><input type="text" id="chk-apt" class="checkout-input" placeholder="Apartment, suite, etc. (optional)"></div>
+                    </div>
+                    <div class="form-row three-col">
+                        <div class="form-group"><input type="text" id="chk-city" class="checkout-input" placeholder="City" required></div>
+                        <div class="form-group">
+                            <select id="chk-state" class="checkout-input" required style="color:#666;">
+                                <option value="" disabled selected>State</option>
+                                <option>Maharashtra</option>
+                                <option>Delhi</option>
+                                <option>Karnataka</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><input type="text" id="chk-pin" class="checkout-input" placeholder="PIN Code" required></div>
+                    </div>
+                </div>
+
+                <div class="checkout-section">
+                    <h2 class="checkout-heading">Secure Payment</h2>
+                    <div class="payment-box">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-weight:bold; color:#444;"><i class="fas fa-lock" style="color:#888; margin-right:8px;"></i> Credit Card / Debit / UPI</span>
+                            <div class="payment-icons">
+                                <i class="fab fa-cc-visa"></i>
+                                <i class="fab fa-cc-mastercard"></i>
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg" alt="UPI" style="height:14px; margin-left:5px; opacity:0.8;">
+                            </div>
+                        </div>
+                        <p style="font-size:0.85rem; color:#888; margin-top:10px;">This is a secure 256-bit encrypted checkout. Your payment details are masked and protected.</p>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary place-order-btn" onclick="processCheckout()">Complete Secure Checkout</button>
+                
+                <div class="trust-badges">
+                    <div class="trust-badge"><i class="fas fa-shield-alt"></i> 100% Secure Checkout</div>
+                    <div class="trust-badge"><i class="fas fa-lock"></i> Encrypted Connection</div>
+                    <div class="trust-badge"><i class="fas fa-undo"></i> Easy Returns</div>
+                </div>
+            </div>
+
+            <!-- Right Column: Order Summary -->
+            <div class="checkout-right">
+                <div class="summary-sticky">
+                    <h2 class="checkout-heading" style="margin-bottom:1.5rem; font-size:1.2rem;">Order Summary</h2>
+                    <div id="checkout-items" class="checkout-items-list">
+                        <!-- Dynamic Cart Items -->
+                    </div>
+                    
+                    <div class="checkout-totals">
+                        <div class="totals-row">
+                            <span>Subtotal</span>
+                            <span id="checkout-subtotal">₹0</span>
+                        </div>
+                        <div class="totals-row">
+                            <span>Shipping</span>
+                            <span style="color:var(--success); font-weight:bold;">Free Standard Shipping</span>
+                        </div>
+                        <div class="totals-row final-total">
+                            <span>Total</span>
+                            <span id="checkout-total">₹0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        let globalTotal = 0;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Fill Cart
+            const cart = JSON.parse(localStorage.getItem('zewar_cart') || '[]');
+            const container = document.getElementById('checkout-items');
+            
+            if (cart.length === 0) {
+                container.innerHTML = '<p style="color:#888; margin-bottom:20px;">Your cart is empty.</p> <a href="shop.html" class="btn btn-outline" style="border:1px solid #ccc;">Return to shop</a>';
+                document.querySelector('.place-order-btn').disabled = true;
+                return;
+            }
+
+            container.innerHTML = cart.map(item => {
+                globalTotal += (item.price * item.qty);
+                return `
+                    <div class="checkout-item">
+                        <div class="c-item-img-wrapper">
+                            <img src="${item.image}" alt="${item.title}">
+                            <span class="c-item-qty">${item.qty}</span>
+                        </div>
+                        <div class="c-item-details">
+                            <span class="c-item-title">${item.title}</span>
+                            <span class="c-item-price">₹${(item.price * item.qty).toLocaleString('en-IN')}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('checkout-subtotal').textContent = '₹' + globalTotal.toLocaleString('en-IN');
+            document.getElementById('checkout-total').textContent = '₹' + globalTotal.toLocaleString('en-IN');
+            
+            // Check Session
+            const user = JSON.parse(sessionStorage.getItem('zewar_customer') || localStorage.getItem('zewar_customer'));
+            if (user) {
+                document.querySelector('.checkout-express-login').style.display = 'none';
+                document.getElementById('chk-email').value = user.email || '';
+                document.getElementById('chk-phone').value = user.phone || '';
+                if (user.name) {
+                    const parts = user.name.split(' ');
+                    document.getElementById('chk-fname').value = parts[0] || '';
+                    document.getElementById('chk-lname').value = parts.slice(1).join(' ') || '';
+                }
+                if (user.shippingAddress) {
+                    document.getElementById('chk-street').value = user.shippingAddress.street || '';
+                    document.getElementById('chk-apt').value = user.shippingAddress.apt || '';
+                    document.getElementById('chk-city').value = user.shippingAddress.city || '';
+                    document.getElementById('chk-state').value = user.shippingAddress.state || '';
+                    document.getElementById('chk-pin').value = user.shippingAddress.pin || '';
+                }
+            }
+        });
+
+        window.processCheckout = async function() {
+            const cart = JSON.parse(localStorage.getItem('zewar_cart') || '[]');
+            if(cart.length === 0) return alert('Cart is empty!');
+            
+            const email = document.getElementById('chk-email').value;
+            const phone = document.getElementById('chk-phone').value;
+            const fname = document.getElementById('chk-fname').value;
+            const lname = document.getElementById('chk-lname').value;
+            
+            if(!email || !phone || !fname || !lname) return alert('Please fill in required contact and name fields.');
+            
+            const address = {
+                street: document.getElementById('chk-street').value,
+                apt: document.getElementById('chk-apt').value,
+                city: document.getElementById('chk-city').value,
+                state: document.getElementById('chk-state').value,
+                pin: document.getElementById('chk-pin').value
+            };
+            
+            const btn = document.querySelector('.place-order-btn');
+            btn.disabled = true;
+            btn.textContent = 'Authenticating Secure Payment...';
+            
+            try {
+                const res = await fetch('http://localhost:3000/api/orders/checkout', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({
+                        customer: { email, phone, firstName: fname, lastName: lname, address },
+                        cart, total: globalTotal
+                    })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    if (sessionStorage.getItem('zewar_customer')) sessionStorage.setItem('zewar_customer', JSON.stringify(data.customer));
+                    if (localStorage.getItem('zewar_customer')) localStorage.setItem('zewar_customer', JSON.stringify(data.customer));
+                    localStorage.removeItem('zewar_cart');
+                    window.location.href = 'dashboard.html';
+                } else {
+                    alert(data.message || 'Checkout failed');
+                    btn.disabled = false;
+                    btn.textContent = 'Complete Secure Checkout';
+                }
+            } catch(err) {
+                alert('Connection to secure server failed.');
+                btn.disabled = false;
+                btn.textContent = 'Complete Secure Checkout';
+            }
+        }
+    </script>
+</body>
+</html>

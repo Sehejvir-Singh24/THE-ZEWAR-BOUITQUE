@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Zewar Boutique | Premium Artificial Jewellery</title>
+    <meta name="description" content="Discover exquisite artificial jewellery at The Zewar Boutique. Shop our premium collections of necklaces, rings, and earrings.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#" class="logo">
+                <img src="./images/logo.jpg" alt="The Zewar Boutique Logo" class="logo-img">
+            </a>
+            <div class="menu-toggle" id="mobile-menu">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html#home" class="nav-links">Home</a></li>
+                <li><a href="index.html#collections" class="nav-links">Collections</a></li>
+                <li><a href="#about" class="nav-links">About Us</a></li>
+                <li><a href="#contact" class="nav-links">Contact</a></li>
+                <li class="nav-icons" style="margin-left: 1.5rem; display: flex; gap: 15px;">
+                    <a href="#" class="nav-icon auth-icon-trigger"><i class="fas fa-user"></i></a>
+                    <a href="#" class="nav-icon"><i class="fas fa-search"></i></a>
+                    <a href="#" class="nav-icon cart-icon-trigger"><i class="fas fa-shopping-cart"></i></a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header id="home" class="hero split-screen">
+        <div class="hero-image-half reveal-fade">
+            <img src="./images/hero_jewelry_closeup_1774363984430.png" alt="Signature Emerald Necklace" class="hero-img">
+        </div>
+        <div class="hero-content-half reveal-up">
+            <h1 class="hero-title">Elegance Redefined</h1>
+            <p class="hero-subtitle">Discover our premium collection of exquisite artificial jewellery.</p>
+            <a href="shop.html" class="btn btn-primary">Shop Now</a>
+        </div>
+    </header>
+    <!-- Featured Collections -->
+    <section id="collections" class="collections-section">
+        <h2 class="section-title reveal-fade">Our Curated Collections</h2>
+        <div class="masonry-grid">
+            <div class="masonry-card large-card reveal-up">
+                <img src="./images/lifestyle_necklace_1774364001522.png" alt="Premium Necklaces" class="masonry-img">
+                <div class="masonry-overlay glass-effect">
+                    <h3>Necklaces</h3>
+                    <p>Make a statement with our stunning pieces.</p>
+                    <a href="shop.html?category=Necklaces" class="btn-text">Explore <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="masonry-card square-card reveal-up" style="transition-delay: 0.2s;">
+                <img src="./images/lifestyle_earrings_1774364021559.png" alt="Premium Earrings" class="masonry-img">
+                <div class="masonry-overlay glass-effect">
+                    <h3>Earrings</h3>
+                    <p>Perfect sparkle for every occasion.</p>
+                    <a href="shop.html?category=Earrings" class="btn-text">Explore <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="masonry-card tall-card reveal-up" style="transition-delay: 0.4s;">
+                <img src="./images/lifestyle_bangles_1774364039367.png" alt="Premium Bangles" class="masonry-img">
+                <div class="masonry-overlay glass-effect">
+                    <h3>Bangles & Bracelets</h3>
+                    <p>Adorn your wrists with timeless beauty.</p>
+                    <a href="shop.html?category=Bangles%20%26%20Bracelets" class="btn-text">Explore <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pendant Sets Section -->
+    <section id="pendant-sets" class="pendant-section">
+        <div class="pendant-content reveal-up">
+            <h3>Pendant Sets</h3>
+            <p>Experience the perfect harmony of our curated pendant and earring sets. Designed to seamlessly complement your elegance, these sets are the epitome of coordinated luxury.</p>
+            <a href="shop.html?category=Pendant%20Sets" class="btn btn-primary">Shop Sets</a>
+        </div>
+        <div class="pendant-img-wrapper reveal-fade">
+            <img src="./images/pendant_set_1774446745754.png" alt="Luxury Pendant Set">
+        </div>
+    </section>
+
+    <!-- Earrings Showcase -->
+    <section id="earrings-showcase" class="collections-section" style="background-color: var(--bg-dark);">
+        <h2 class="section-title reveal-fade">The Earrings Collection</h2>
+        <div class="earrings-grid">
+            <div class="masonry-card gallery-card reveal-up">
+                <img src="./images/earrings_studs_1774446764402.png" alt="Diamond Studs" class="masonry-img">
+                <div class="masonry-overlay glass-effect">
+                    <h3>Classic Studs</h3>
+                    <p>Timeless elegance for every day.</p>
+                </div>
+            </div>
+            <div class="masonry-card gallery-card reveal-up" style="transition-delay: 0.2s;">
+                <img src="./images/earrings_hoops_1774446782340.png" alt="Luxury Hoops" class="masonry-img">
+                <div class="masonry-overlay glass-effect">
+                    <h3>Luxury Hoops</h3>
+                    <p>Make a bold, sophisticated statement.</p>
+                </div>
+            </div>
+            <div class="masonry-card gallery-card reveal-up" style="transition-delay: 0.4s;">
+                <img src="./images/earrings_drops_1774446803461.png" alt="Drop Earrings" class="masonry-img">
+                <div class="masonry-overlay glass-effect">
+                    <h3>Elegant Drops</h3>
+                    <p>Graceful movement and brilliant sparkle.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Rings Gallery -->
+    <section id="rings-gallery" class="collections-section">
+        <h2 class="section-title reveal-fade">Exceptional Rings</h2>
+        <div class="rings-grid">
+            <div class="masonry-card gallery-card reveal-up">
+                <img src="./images/rings_gallery_1774446822090.png" alt="Luxury Rings Collection" class="masonry-img">
+                <div class="masonry-overlay glass-effect">
+                    <h3>Statement Rings</h3>
+                    <p>Discover our meticulously crafted rings designed to capture attention and reflect your unique style.</p>
+                    <a href="shop.html?category=Rings" class="btn-text">Explore Rings <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dynamic Products Section -->
+    <section id="shop" class="products-section" style="padding: 6rem 2rem; background: var(--bg-light); max-width: 1200px; margin: 0 auto;">
+        <h2 class="section-title">Shop Our Products</h2>
+        <div id="dynamic-products-grid" class="product-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2.5rem;">
+            <!-- Products will be injected here via JS -->
+            <p style="text-align:center; grid-column: 1/-1; color:#666; font-size:1.1rem; padding: 2rem 0;">No products have been added yet. Please visit the <a href="admin.html" style="color:var(--secondary); text-decoration:underline;">Admin Panel</a> to add some!</p>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about-section">
+        <div class="about-container">
+            <div class="about-text">
+                <h2 class="section-title align-left">The Art of Imitation</h2>
+                <p>At The Zewar Boutique, we believe that luxury should be accessible. Our premium artificial jewellery is crafted with the same attention to detail and exquisite design as fine jewellery. Perfect for weddings, parties, or adding a touch of glamour to your everyday look.</p>
+                <div class="features">
+                    <div class="feature">
+                        <i class="fas fa-gem"></i>
+                        <span>Premium Quality</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-hand-holding-heart"></i>
+                        <span>Handcrafted Designs</span>
+                    </div>
+                </div>
+            </div>
+            <div class="about-image">
+                <!-- Image placeholder, styled via CSS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact" class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <h2>The Zewar Boutique</h2>
+                <p>Elevating your style with premium artificial jewellery.</p>
+            </div>
+            <div class="footer-links">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="index.html#home">Home</a></li>
+                    <li><a href="index.html#collections">Collections</a></li>
+                    <li><a href="#about">About</a></li>
+                </ul>
+            </div>
+            <div class="footer-social">
+                <h3>Connect With Us</h3>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-pinterest-p"></i></a>
+                </div>
+                <p class="contact-email">hello@zewarboutique.com</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 The Zewar Boutique. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

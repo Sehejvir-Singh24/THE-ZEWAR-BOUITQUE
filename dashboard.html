@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Portal | The Zewar Boutique</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body style="background:var(--bg-light);">
+    <nav class="navbar scrolled" style="background: rgba(13, 27, 17, 0.98);">
+        <div class="nav-container">
+            <a href="index.html" class="logo"><span style="color:var(--secondary-color); font-family:'Playfair Display'; font-size:1.8rem; font-style:italic;">Zewar.</span></a>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-links">Home</a></li>
+                <li><a href="shop.html" class="nav-links">Shop All</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main style="padding: 150px 2rem 5rem; max-width:1000px; margin:0 auto; min-height:80vh;">
+        <div style="background:#fff; padding:3rem; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.05);">
+            <div style="border-bottom: 1px solid #eee; padding-bottom:1.5rem; margin-bottom:2rem; display:flex; justify-content:space-between; align-items:center;">
+                <h1 style="font-family:var(--font-heading); color:var(--primary-color); font-size:2.5rem;">My Account</h1>
+                <button class="btn btn-outline" style="border:1px solid #ccc; color:#666; padding:10px 20px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="sessionStorage.removeItem('zewar_customer'); localStorage.removeItem('zewar_customer'); window.location.href='index.html'">Log Out <i class="fas fa-sign-out-alt"></i></button>
+            </div>
+            
+            <div style="display:flex; gap:3rem; flex-wrap:wrap;">
+                <div style="flex:1; min-width:300px;">
+                    <h3 style="color:var(--secondary-color); margin-bottom:1rem; font-size:1.2rem; text-transform:uppercase; letter-spacing:1px; font-weight:bold;">Profile Overview</h3>
+                    <div style="background:#f9f9f9; padding:2.5rem 2rem; border-radius:6px; border:1px solid #eee; text-align:center;">
+                        <i class="fas fa-user-circle" style="font-size:4.5rem; color:#ccc; margin-bottom:1rem; display:block;"></i>
+                        <h4 id="dash-name" style="font-size:1.6rem; margin-bottom:5px; color:-var(--primary-color);">Welcome</h4>
+                        <p id="dash-email" style="color:#666; margin-bottom:20px;"></p>
+                        <hr style="border:none; border-top:1px solid #ddd; margin-bottom:20px;">
+                        <p style="font-weight:bold; color:#333; font-size:1.1rem;">Total Spend: <span id="dash-spend" style="color:var(--success);">₹0</span></p>
+                        <p style="font-weight:bold; color:#333; margin-top:5px; font-size:1.1rem;">Orders Fulfilled: <span id="dash-orders">0</span></p>
+                    </div>
+                </div>
+                
+                <div style="flex:2; min-width:300px;">
+                    <h3 style="color:var(--secondary-color); margin-bottom:1rem; font-size:1.2rem; text-transform:uppercase; letter-spacing:1px; font-weight:bold;">Recent Orders</h3>
+                    <div id="dash-order-history" style="background:#f9f9f9; padding:4rem 2rem; border-radius:6px; border:1px solid #eee; text-align:center; color:#888;">
+                        <i class="fas fa-box-open" style="font-size:3.5rem; color:#ddd; margin-bottom:1.5rem; display:block;"></i>
+                        <p style="font-size:1.1rem; margin-bottom:2rem;">You haven't placed any orders yet.</p>
+                        <a href="shop.html" class="btn btn-primary" style="display:inline-block; text-decoration:none; padding:12px 30px; font-size:1.1rem;">Start Shopping</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer id="contact" class="footer">
+        <div class="footer-bottom">
+            <p>&copy; 2026 The Zewar Boutique. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = JSON.parse(sessionStorage.getItem('zewar_customer') || localStorage.getItem('zewar_customer'));
+            if(!user) {
+                window.location.href = 'index.html';
+            } else {
+                document.getElementById('dash-name').textContent = user.name;
+                document.getElementById('dash-email').textContent = user.email || user.phone || 'No contact provided';
+                document.getElementById('dash-spend').textContent = '₹' + (user.spend || 0).toLocaleString('en-IN');
+                document.getElementById('dash-orders').textContent = user.orders || 0;
+                
+                try {
+                    const res = await fetch(`http://localhost:3000/api/orders/customer/${user.id}`);
+                    const orders = await res.json();
+                    
+                    const historyContainer = document.getElementById('dash-order-history');
+                    if (orders.length > 0) {
+                        historyContainer.style.textAlign = 'left';
+                        historyContainer.innerHTML = orders.map(o => `
+                            <div style="background:#fff; border:1px solid #ddd; border-radius:6px; padding:1.5rem; margin-bottom:1.5rem; box-shadow:0 4px 15px rgba(0,0,0,0.02);">
+                                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:1rem; margin-bottom:1rem;">
+                                    <div>
+                                        <h4 style="color:var(--primary-color); font-size:1.1rem; margin-bottom:4px; font-weight:bold;">${o.id}</h4>
+                                        <span style="font-size:0.85rem; color:#888;">Placed on ${new Date(o.date).toLocaleDateString()}</span>
+                                    </div>
+                                    <div style="text-align:right;">
+                                        <span style="background:rgba(212,175,55,0.1); color:var(--accent); padding:6px 12px; border-radius:4px; font-size:0.85rem; font-weight:bold;">${o.status}</span>
+                                        <br><span style="font-size:0.85rem; color:#666; display:inline-block; margin-top:8px;">Fulfillment: <strong style="color:var(--success);">${o.fulfillment}</strong></span>
+                                        ${o.tracking ? `<br><span style="font-size:0.85rem; color:var(--info); display:inline-block; margin-top:5px;">Tracking: ${o.tracking}</span>` : ''}
+                                    </div>
+                                </div>
+                                <div>
+                                    ${(o.items || []).map(i => `
+                                        <div style="display:flex; justify-content:space-between; font-size:0.95rem; margin-bottom:8px; align-items:center;">
+                                            <span style="display:flex; align-items:center; gap:10px;"><img src="${i.image}" style="width:30px; height:30px; border-radius:4px; object-fit:cover;"> ${i.qty}x ${i.title}</span>
+                                            <strong>₹${(i.price * i.qty).toLocaleString('en-IN')}</strong>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <div style="text-align:right; margin-top:1rem; padding-top:1rem; border-top:1px dashed #eee;">
+                                    <strong style="font-size:1.2rem; color:#333;">Total Paid: ₹${o.total.toLocaleString('en-IN')}</strong>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                } catch(e) { console.error("Error loading orders", e); }
+            }
+        });
+    </script>
+</body>
+</html>
