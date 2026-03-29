@@ -368,10 +368,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const authOverlay = document.getElementById('auth-overlay');
     const closeAuthBtn = document.getElementById('close-auth');
     
-    function openAuth() {
+    let authRequired = false;
+
+    function openAuth(required = false) {
+        authRequired = required;
         authModal.classList.add('open');
         authOverlay.classList.add('active');
         document.body.style.overflow = 'hidden';
+        if (required) {
+            // Show a welcoming gate message
+            const h2 = authModal.querySelector('.auth-box h2');
+            if (h2) h2.textContent = 'Welcome to Zewar Boutique';
+            const subtitle = authModal.querySelector('.auth-box');
+            if (subtitle && !authModal.querySelector('#gate-subtitle')) {
+                const p = document.createElement('p');
+                p.id = 'gate-subtitle';
+                p.style.cssText = 'color:#888; font-size:0.9rem; margin-top:-1rem; margin-bottom:1.5rem;';
+                p.textContent = 'Please sign in or create an account to continue shopping.';
+                h2.insertAdjacentElement('afterend', p);
+            }
+        }
     }
     window.closeAuth = function() {
         authModal.classList.remove('open');
@@ -390,8 +406,14 @@ document.addEventListener('DOMContentLoaded', () => {
         clearInterval(timerInterval);
     }
     
-    closeAuthBtn.addEventListener('click', closeAuth);
-    authOverlay.addEventListener('click', closeAuth);
+    closeAuthBtn.addEventListener('click', () => { if (!authRequired) closeAuth(); });
+    authOverlay.addEventListener('click', () => { if (!authRequired) closeAuth(); });
+
+    // Auth Gate: open modal if no session on page load
+    const existingUser = sessionStorage.getItem('zewar_customer') || localStorage.getItem('zewar_customer');
+    if (!existingUser) {
+        openAuth(true);
+    }
 
     document.addEventListener('click', (e) => {
         const trigger = e.target.closest('.auth-icon-trigger');
@@ -451,8 +473,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
         
         if (data.success) {
+            sessionStorage.setItem('zewar_customer', JSON.stringify(data.customer));
+            authRequired = false;
             closeAuth();
-            alert(`Login Successful! Welcome, ${data.customer.name}`);
         } else alert('Invalid OTP');
     }
 
@@ -465,7 +488,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
         if(data.success) { 
             sessionStorage.setItem('zewar_customer', JSON.stringify(data.customer));
-            closeAuth(); window.location.href = 'dashboard.html'; 
+            authRequired = false;
+            closeAuth();
         }
     }
 
@@ -527,8 +551,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if(data.success) { 
                 if(remember) localStorage.setItem('zewar_customer', JSON.stringify(data.customer));
                 else sessionStorage.setItem('zewar_customer', JSON.stringify(data.customer));
-                closeAuth(); 
-                window.location.href = 'dashboard.html'; 
+                authRequired = false;
+                closeAuth();
             } else alert(data.message);
         } catch(err) { alert('Server disabled or unavailable'); }
     }
@@ -553,8 +577,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if(data.success) { 
                 sessionStorage.setItem('zewar_customer', JSON.stringify(data.customer));
-                closeAuth(); 
-                window.location.href = 'dashboard.html'; 
+                authRequired = false;
+                closeAuth();
             } else alert(data.message);
         } catch(err) { alert('Server unavailable'); }
     }
