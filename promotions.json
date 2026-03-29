@@ -1,18 +1,1 @@
-[
-  {
-    "id": "p1",
-    "code": "ZEWAR10",
-    "type": "percentage",
-    "value": 10,
-    "expiry": "2026-12-31",
-    "minSpend": 100
-  },
-  {
-    "id": "p2",
-    "code": "WELCOME50",
-    "type": "flat",
-    "value": 50,
-    "expiry": "2026-06-30",
-    "minSpend": 250
-  }
-]
+[]

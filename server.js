@@ -33,27 +33,7 @@ const saveFileData = (filename, data) => {
     fs.writeFileSync(path.join(DATA_DIR, filename), JSON.stringify(data, null, 2));
 };
 
-// Seed Dummy Data for new modules if empty
-if (getFileData('customers.json').length === 0) {
-    saveFileData('customers.json', [
-        { id: "c1", name: "Aisha Khan", email: "aisha@example.com", phone: "+1234567890", spend: 450.00, orders: 2 },
-        { id: "c2", name: "Sarah Jenkins", email: "sarahj@example.com", phone: "+0987654321", spend: 129.00, orders: 1 },
-        { id: "c3", name: "Sophia Martinez", email: "sophia.m@example.com", phone: "+1122334455", spend: 899.00, orders: 4 }
-    ]);
-}
-if (getFileData('orders.json').length === 0) {
-    saveFileData('orders.json', [
-        { id: "ORD-1001", date: new Date().toISOString(), customerId: "c1", customerName: "Aisha Khan", total: 299.00, status: "Paid", fulfillment: "Processing" },
-        { id: "ORD-1002", date: new Date(Date.now() - 86400000*2).toISOString(), customerId: "c2", customerName: "Sarah Jenkins", total: 129.00, status: "Paid", fulfillment: "Shipped", tracking: "TRK987654321" },
-        { id: "ORD-1003", date: new Date(Date.now() - 86400000*5).toISOString(), customerId: "c3", customerName: "Sophia Martinez", total: 450.00, status: "Paid", fulfillment: "Delivered", tracking: "TRK123456789" }
-    ]);
-}
-if (getFileData('promotions.json').length === 0) {
-    saveFileData('promotions.json', [
-        { id: "p1", code: "ZEWAR10", type: "percentage", value: 10, expiry: "2026-12-31", minSpend: 100 },
-        { id: "p2", code: "WELCOME50", type: "flat", value: 50, expiry: "2026-06-30", minSpend: 250 }
-    ]);
-}
+// Removed automatic dummy data seeding
 
 // --- API ROUTES ---
 
