@@ -69,7 +69,7 @@
                 document.getElementById('dash-orders').textContent = user.orders || 0;
                 
                 try {
-                    const res = await fetch(`http://localhost:3000/api/orders/customer/${user.id}`);
+                    const res = await fetch(`/api/orders/customer/${user.id}`);
                     const orders = await res.json();
                     
                     const historyContainer = document.getElementById('dash-order-history');
