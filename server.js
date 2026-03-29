@@ -1,367 +1,239 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
+const mongoose = require('mongoose');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DATA_DIR = __dirname;
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// Ensure images directory exists
-const uploadDir = path.join(__dirname, 'images');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+// --- Connect to MongoDB ---
+mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log('✅ Connected to MongoDB Atlas'))
+    .catch(err => console.error('❌ MongoDB connection error:', err));
 
+// --- Image Upload Setup ---
+const uploadDir = path.join(__dirname, 'images');
+const fs = require('fs');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, uploadDir),
     filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname.replace(/\s+/g, '-'))
 });
 const upload = multer({ storage });
 
-// Helper to read/write JSON files
-const getFileData = (filename) => {
-    const filePath = path.join(DATA_DIR, filename);
-    if (!fs.existsSync(filePath)) fs.writeFileSync(filePath, JSON.stringify([]));
-    try { return JSON.parse(fs.readFileSync(filePath, 'utf8')); } catch { return []; }
-};
+// --- Mongoose Schemas ---
+const productSchema = new mongoose.Schema({
+    id: String, title: String, sku: String, price: Number, costPrice: Number,
+    discountPrice: Number, stock: Number, category: String, description: String,
+    images: [String], image: String
+}, { strict: false });
 
-const saveFileData = (filename, data) => {
-    fs.writeFileSync(path.join(DATA_DIR, filename), JSON.stringify(data, null, 2));
-};
+const orderSchema = new mongoose.Schema({
+    id: String, date: String, customerId: String, customerName: String,
+    total: Number, status: String, fulfillment: String, items: Array,
+    shippingAddress: Object, source: String, paymentMode: String, tracking: String
+}, { strict: false });
 
-// Removed automatic dummy data seeding
+const customerSchema = new mongoose.Schema({
+    id: String, name: String, email: String, phone: String,
+    password: String, spend: Number, orders: Number, shippingAddress: Object
+}, { strict: false });
+
+const promotionSchema = new mongoose.Schema({
+    id: String, code: String, type: String, value: Number, expiry: String, minSpend: Number
+}, { strict: false });
+
+const Product  = mongoose.model('Product',  productSchema);
+const Order    = mongoose.model('Order',    orderSchema);
+const Customer = mongoose.model('Customer', customerSchema);
+const Promo    = mongoose.model('Promo',    promotionSchema);
 
 // --- API ROUTES ---
 
 // Dashboard Analytics
-app.get('/api/dashboard', (req, res) => {
-    const orders = getFileData('orders.json');
-    const products = getFileData('products.json');
-    
-    const revenue = orders.filter(o => o.status === 'Paid').reduce((sum, o) => sum + o.total, 0);
+app.get('/api/dashboard', async (req, res) => {
+    const orders   = await Order.find();
+    const products = await Product.find();
+    const revenue  = orders.filter(o => o.status === 'Paid').reduce((s, o) => s + o.total, 0);
     const activeOrders = orders.filter(o => o.fulfillment !== 'Delivered' && o.status === 'Paid').length;
     const lowStock = products.filter(p => (p.stock || 0) < 5).length;
-    
     res.json({ totalSales: orders.length, activeOrders, revenue, lowStock });
 });
 
-// Products CRUD
-app.get('/api/products', (req, res) => res.json(getFileData('products.json')));
-app.post('/api/products', upload.array('images', 5), (req, res) => {
-    const products = getFileData('products.json');
-    
+// Products
+app.get('/api/products', async (req, res) => res.json(await Product.find()));
+
+app.post('/api/products', upload.array('images', 5), async (req, res) => {
     let imageUrls = req.body.existingImages ? JSON.parse(req.body.existingImages) : [];
-    if (req.files && req.files.length > 0) {
-        req.files.forEach(f => imageUrls.push(`./images/${f.filename}`));
-    }
+    if (req.files) req.files.forEach(f => imageUrls.push(`./images/${f.filename}`));
     if (req.body.imageUrl) imageUrls.push(req.body.imageUrl);
-
-    const newProduct = {
-        id: Date.now().toString(),
-        title: req.body.title,
+    const p = new Product({
+        id: Date.now().toString(), title: req.body.title,
         sku: req.body.sku || `SKU-${Date.now().toString().slice(-4)}`,
-        price: parseFloat(req.body.price),
-        costPrice: parseFloat(req.body.costPrice || 0),
+        price: parseFloat(req.body.price), costPrice: parseFloat(req.body.costPrice || 0),
         discountPrice: req.body.discount ? parseFloat(req.body.discount) : null,
-        stock: parseInt(req.body.stock || 0),
-        category: req.body.category,
-        description: req.body.desc || '',
-        images: imageUrls,
+        stock: parseInt(req.body.stock || 0), category: req.body.category,
+        description: req.body.desc || '', images: imageUrls,
         image: imageUrls[0] || 'https://via.placeholder.com/300?text=No+Image'
-    };
-    products.push(newProduct);
-    saveFileData('products.json', products);
-    res.json(newProduct);
-});
-app.put('/api/products/:id', upload.array('images', 5), (req, res) => {
-    let products = getFileData('products.json');
-    const index = products.findIndex(p => p.id === req.params.id);
-    if (index > -1) {
-        if (req.body.stock !== undefined) products[index].stock = parseInt(req.body.stock);
-        if (req.body.price !== undefined) products[index].price = parseFloat(req.body.price);
-        
-        if (req.body.discountPrice) products[index].discountPrice = parseFloat(req.body.discountPrice);
-        if (req.body.clearDiscount === 'true') products[index].discountPrice = null;
-        
-        if (req.files && req.files.length > 0) {
-            if (!products[index].images) products[index].images = [products[index].image];
-            req.files.forEach(f => products[index].images.push(`./images/${f.filename}`));
-            
-            // Swap placeholder main if necessary
-            if (products[index].image && products[index].image.includes('placeholder')) {
-                products[index].image = `./images/${req.files[0].filename}`;
-            }
-        }
-        
-        saveFileData('products.json', products);
-        res.json({ success: true, product: products[index] });
-    } else {
-        res.status(404).json({ success: false, message: 'Product not found' });
-    }
+    });
+    await p.save();
+    res.json(p);
 });
 
-app.delete('/api/products/:id/image', (req, res) => {
-    let products = getFileData('products.json');
-    const index = products.findIndex(p => p.id === req.params.id);
-    if (index > -1) {
-        const imgToRemove = req.body.image;
-        if (products[index].images) {
-            products[index].images = products[index].images.filter(img => img !== imgToRemove);
-            if (products[index].image === imgToRemove) {
-                products[index].image = products[index].images[0] || 'https://via.placeholder.com/300?text=No+Image';
-            }
-            saveFileData('products.json', products);
-            res.json({ success: true, product: products[index] });
-        } else {
-            res.json({ success: false, message: 'No images found' });
-        }
-    } else {
-        res.status(404).json({ success: false, message: 'Product not found' });
+app.put('/api/products/:id', upload.array('images', 5), async (req, res) => {
+    const p = await Product.findOne({ id: req.params.id });
+    if (!p) return res.status(404).json({ success: false, message: 'Product not found' });
+    if (req.body.stock !== undefined) p.stock = parseInt(req.body.stock);
+    if (req.body.price !== undefined) p.price = parseFloat(req.body.price);
+    if (req.body.discountPrice) p.discountPrice = parseFloat(req.body.discountPrice);
+    if (req.body.clearDiscount === 'true') p.discountPrice = null;
+    if (req.files && req.files.length > 0) {
+        if (!p.images) p.images = [p.image];
+        req.files.forEach(f => p.images.push(`./images/${f.filename}`));
+        if (p.image && p.image.includes('placeholder')) p.image = `./images/${req.files[0].filename}`;
     }
+    p.markModified('images');
+    await p.save();
+    res.json({ success: true, product: p });
 });
 
-app.delete('/api/products/:id', (req, res) => {
-    let products = getFileData('products.json').filter(p => p.id !== req.params.id);
-    saveFileData('products.json', products);
+app.delete('/api/products/:id/image', async (req, res) => {
+    const p = await Product.findOne({ id: req.params.id });
+    if (!p) return res.status(404).json({ success: false, message: 'Product not found' });
+    p.images = (p.images || []).filter(img => img !== req.body.image);
+    if (p.image === req.body.image) p.image = p.images[0] || 'https://via.placeholder.com/300?text=No+Image';
+    p.markModified('images');
+    await p.save();
+    res.json({ success: true, product: p });
+});
+
+app.delete('/api/products/:id', async (req, res) => {
+    await Product.deleteOne({ id: req.params.id });
     res.json({ success: true });
 });
 
-// Orders CRUD
-app.get('/api/orders', (req, res) => res.json(getFileData('orders.json')));
-app.put('/api/orders/:id', (req, res) => {
-    let orders = getFileData('orders.json');
-    const index = orders.findIndex(o => o.id === req.params.id);
-    if (index > -1) {
-        orders[index] = { ...orders[index], ...req.body };
-        saveFileData('orders.json', orders);
-        res.json(orders[index]);
-    } else {
-        res.status(404).json({error: "Order not found"});
-    }
+// Orders
+app.get('/api/orders', async (req, res) => res.json(await Order.find()));
+
+app.put('/api/orders/:id', async (req, res) => {
+    const o = await Order.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+    if (o) res.json(o); else res.status(404).json({ error: 'Order not found' });
+});
+
+app.get('/api/orders/customer/:id', async (req, res) => {
+    res.json((await Order.find({ customerId: req.params.id })).reverse());
 });
 
 // Customers
-app.get('/api/customers', (req, res) => res.json(getFileData('customers.json')));
+app.get('/api/customers', async (req, res) => res.json(await Customer.find()));
 
 // Promotions
-app.get('/api/promotions', (req, res) => res.json(getFileData('promotions.json')));
-app.post('/api/promotions', (req, res) => {
-    let promos = getFileData('promotions.json');
-    const newP = { id: Date.now().toString(), ...req.body };
-    promos.push(newP);
-    saveFileData('promotions.json', promos);
-    res.json(newP);
+app.get('/api/promotions', async (req, res) => res.json(await Promo.find()));
+app.post('/api/promotions', async (req, res) => {
+    const p = new Promo({ id: Date.now().toString(), ...req.body });
+    await p.save(); res.json(p);
 });
-app.delete('/api/promotions/:id', (req, res) => {
-    let promos = getFileData('promotions.json').filter(p => p.id !== req.params.id);
-    saveFileData('promotions.json', promos);
-    res.json({ success: true });
+app.delete('/api/promotions/:id', async (req, res) => {
+    await Promo.deleteOne({ id: req.params.id }); res.json({ success: true });
 });
 
-// --- AUTH & CRM MERGE LOGIC ---
-const mergeCustomer = (profile) => {
-    let customers = getFileData('customers.json');
+// --- Auth & CRM ---
+const mergeCustomer = async (profile) => {
     let existing = null;
-    
-    if (profile.email) existing = customers.find(c => c.email === profile.email);
-    if (!existing && profile.phone) existing = customers.find(c => c.phone === profile.phone);
-    
+    if (profile.email) existing = await Customer.findOne({ email: profile.email });
+    if (!existing && profile.phone) existing = await Customer.findOne({ phone: profile.phone });
     if (existing) {
         if (!existing.email && profile.email) existing.email = profile.email;
         if (!existing.phone && profile.phone) existing.phone = profile.phone;
         if (profile.name && (!existing.name || existing.name === 'Guest')) existing.name = profile.name;
+        await existing.save();
     } else {
-        existing = { id: 'c' + Date.now(), name: profile.name || 'Guest', email: profile.email || '', phone: profile.phone || '', spend: 0, orders: 0 };
-        customers.push(existing);
+        existing = new Customer({ id: 'c' + Date.now(), name: profile.name || 'Guest', email: profile.email || '', phone: profile.phone || '', spend: 0, orders: 0 });
+        await existing.save();
     }
-    saveFileData('customers.json', customers);
     return existing;
 };
 
 let otpStore = {};
-
-app.post('/api/auth/otp', (req, res) => {
-    const { phone } = req.body;
-    otpStore[phone] = "1234"; // Mock OTP
-    res.json({ success: true, message: 'OTP sent' });
-});
-
-app.post('/api/auth/verify', (req, res) => {
+app.post('/api/auth/otp', (req, res) => { otpStore[req.body.phone] = "1234"; res.json({ success: true }); });
+app.post('/api/auth/verify', async (req, res) => {
     const { phone, otp } = req.body;
-    if (otpStore[phone] === otp) {
-        delete otpStore[phone];
-        res.json({ success: true, customer: mergeCustomer({ phone }) });
-    } else {
-        res.status(401).json({ success: false, message: 'Invalid OTP' });
-    }
+    if (otpStore[phone] === otp) { delete otpStore[phone]; res.json({ success: true, customer: await mergeCustomer({ phone }) }); }
+    else res.status(401).json({ success: false, message: 'Invalid OTP' });
 });
+app.post('/api/auth/google', async (req, res) => res.json({ success: true, customer: await mergeCustomer(req.body) }));
 
-app.post('/api/auth/google', (req, res) => {
-    res.json({ success: true, customer: mergeCustomer(req.body) });
-});
-
-app.post('/api/auth/register', (req, res) => {
+app.post('/api/auth/register', async (req, res) => {
     const { firstName, lastName, email, password } = req.body;
-    let customers = getFileData('customers.json');
-    
-    if (customers.find(c => c.email === email)) {
-        return res.status(400).json({ success: false, message: 'Email address is already in use.' });
-    }
-    
-    const newCustomer = {
-        id: 'c' + Date.now(),
-        name: `${firstName} ${lastName}`.trim(),
-        email,
-        password, // Not hashed purely for local demonstration purposes
-        phone: '',
-        spend: 0,
-        orders: 0
-    };
-    customers.push(newCustomer);
-    saveFileData('customers.json', customers);
-    res.json({ success: true, customer: newCustomer });
+    if (await Customer.findOne({ email })) return res.status(400).json({ success: false, message: 'Email address is already in use.' });
+    const c = new Customer({ id: 'c' + Date.now(), name: `${firstName} ${lastName}`.trim(), email, password, phone: '', spend: 0, orders: 0 });
+    await c.save();
+    res.json({ success: true, customer: c });
 });
 
-app.post('/api/auth/login', (req, res) => {
-    const { email, password } = req.body;
-    let customers = getFileData('customers.json');
-    const customer = customers.find(c => c.email === email && c.password === password);
-    if (customer) {
-        res.json({ success: true, customer });
-    } else {
-        res.status(401).json({ success: false, message: 'Invalid email or incorrect password.' });
-    }
+app.post('/api/auth/login', async (req, res) => {
+    const c = await Customer.findOne({ email: req.body.email, password: req.body.password });
+    if (c) res.json({ success: true, customer: c });
+    else res.status(401).json({ success: false, message: 'Invalid email or incorrect password.' });
 });
 
-// --- CHECKOUT MUTATION ---
-app.post('/api/orders/checkout', (req, res) => {
+// --- Checkout ---
+app.post('/api/orders/checkout', async (req, res) => {
     const payload = req.body;
-    let customers = getFileData('customers.json');
-    let orders = getFileData('orders.json');
-    let products = getFileData('products.json');
-    
-    // Validate Stock First
-    let stockValid = true;
+    const products = await Product.find();
     let outOfStockItem = '';
-    payload.cart.forEach(cartItem => {
-        let p = products.find(x => x.id === cartItem.id);
-        if(!p || (p.stock || 0) < cartItem.qty) {
-            stockValid = false;
-            outOfStockItem = cartItem.title;
-        }
+    let stockValid = payload.cart.every(item => {
+        const p = products.find(x => x.id === item.id);
+        if (!p || (p.stock || 0) < item.qty) { outOfStockItem = item.title; return false; }
+        return true;
     });
-    
-    if(!stockValid) {
-        return res.status(400).json({ success: false, message: `Payment Rejected: ${outOfStockItem} is currently out of stock or insufficient quantity.` });
+    if (!stockValid) return res.status(400).json({ success: false, message: `${outOfStockItem} is out of stock or insufficient quantity.` });
+    for (const item of payload.cart) {
+        const p = await Product.findOne({ id: item.id });
+        if (p) { p.stock -= item.qty; await p.save(); }
     }
-    
-    // Deduct Stock
-    payload.cart.forEach(cartItem => {
-        let p = products.find(x => x.id === cartItem.id);
-        if(p) p.stock -= cartItem.qty;
-    });
-    
-    let customer = customers.find(c => c.email === payload.customer.email);
-    if (!customer && payload.customer.phone) customer = customers.find(c => c.phone === payload.customer.phone);
-    
+    let customer = await Customer.findOne({ email: payload.customer.email });
+    if (!customer && payload.customer.phone) customer = await Customer.findOne({ phone: payload.customer.phone });
     if (customer) {
         if (!customer.phone) customer.phone = payload.customer.phone;
-        if (!customer.shippingAddress && payload.customer.address.street) customer.shippingAddress = payload.customer.address;
         customer.spend = (customer.spend || 0) + payload.total;
         customer.orders = (customer.orders || 0) + 1;
+        await customer.save();
     } else {
-        customer = {
-            id: 'c' + Date.now(),
-            name: `${payload.customer.firstName} ${payload.customer.lastName}`.trim(),
-            email: payload.customer.email,
-            phone: payload.customer.phone,
-            password: '', 
-            shippingAddress: payload.customer.address.street ? payload.customer.address : null,
-            spend: payload.total,
-            orders: 1
-        };
-        customers.push(customer);
+        customer = new Customer({ id: 'c' + Date.now(), name: `${payload.customer.firstName} ${payload.customer.lastName}`.trim(), email: payload.customer.email, phone: payload.customer.phone, password: '', spend: payload.total, orders: 1 });
+        await customer.save();
     }
-    
-    const newOrder = {
-        id: `ORD-${Date.now().toString().slice(-6)}`,
-        date: new Date().toISOString(),
-        customerId: customer.id,
-        customerName: customer.name,
-        total: payload.total,
-        status: 'Payment Pending',
-        fulfillment: 'Processing',
-        items: payload.cart,
-        shippingAddress: payload.customer.address,
-        source: 'Online - Web',
-        paymentMode: 'Credit Card / UPI Gateway'
-    };
-    orders.push(newOrder);
-    
-    saveFileData('products.json', products);
-    saveFileData('customers.json', customers);
-    saveFileData('orders.json', orders);
-    
+    const newOrder = new Order({ id: `ORD-${Date.now().toString().slice(-6)}`, date: new Date().toISOString(), customerId: customer.id, customerName: customer.name, total: payload.total, status: 'Payment Pending', fulfillment: 'Processing', items: payload.cart, shippingAddress: payload.customer.address, source: 'Online - Web', paymentMode: 'Credit Card / UPI Gateway' });
+    await newOrder.save();
     res.json({ success: true, order: newOrder, customer });
 });
 
-// --- POS MANUAL ENTRY MUTATION ---
-app.post('/api/admin/pos-order', (req, res) => {
-    const payload = req.body; 
-    let customers = getFileData('customers.json');
-    let orders = getFileData('orders.json');
-    let products = getFileData('products.json');
-    
-    let product = products.find(p => p.id === payload.productId);
-    if(!product) return res.status(400).json({ success: false, message: 'Product not found' });
-    if((product.stock || 0) < payload.qty) return res.status(400).json({ success: false, message: `Insufficient inventory. Only ${product.stock} remaining.` });
-    
-    product.stock -= payload.qty;
-    
-    let customer = customers.find(c => c.id === payload.customerId);
+// --- POS ---
+app.post('/api/admin/pos-order', async (req, res) => {
+    const payload = req.body;
+    const product = await Product.findOne({ id: payload.productId });
+    if (!product) return res.status(400).json({ success: false, message: 'Product not found' });
+    if ((product.stock || 0) < payload.qty) return res.status(400).json({ success: false, message: `Insufficient inventory. Only ${product.stock} remaining.` });
+    product.stock -= Number(payload.qty);
+    await product.save();
+    let customer = payload.customerId ? await Customer.findOne({ id: payload.customerId }) : null;
     if (!customer) {
-        customer = {
-            id: 'c' + Date.now(),
-            name: payload.customerName || 'Walk-in Customer',
-            email: '', phone: payload.customerPhone || '', password: '', 
-            shippingAddress: null, spend: 0, orders: 0
-        };
-        customers.push(customer);
+        customer = new Customer({ id: 'c' + Date.now(), name: payload.customerName || 'Walk-in Customer', email: '', phone: payload.customerPhone || '', password: '', spend: 0, orders: 0 });
+        await customer.save();
     }
-    
     const totalPaid = Number(payload.overridePrice) * Number(payload.qty);
     customer.spend = (customer.spend || 0) + totalPaid;
     customer.orders = (customer.orders || 0) + 1;
-    
-    const newOrder = {
-        id: `POS-${Date.now().toString().slice(-6)}`,
-        date: new Date().toISOString(),
-        customerId: customer.id,
-        customerName: customer.name,
-        total: totalPaid,
-        status: 'Paid',
-        fulfillment: payload.fulfillment,
-        items: [{ id: product.id, title: product.title, price: Number(payload.overridePrice), qty: Number(payload.qty), image: product.image }],
-        shippingAddress: null,
-        source: 'Offline - Manual',
-        paymentMode: payload.paymentMode
-    };
-    orders.push(newOrder);
-    
-    saveFileData('products.json', products);
-    saveFileData('customers.json', customers);
-    saveFileData('orders.json', orders);
-    
+    await customer.save();
+    const newOrder = new Order({ id: `POS-${Date.now().toString().slice(-6)}`, date: new Date().toISOString(), customerId: customer.id, customerName: customer.name, total: totalPaid, status: 'Paid', fulfillment: payload.fulfillment, items: [{ id: product.id, title: product.title, price: Number(payload.overridePrice), qty: Number(payload.qty), image: product.image }], source: 'Offline - Manual', paymentMode: payload.paymentMode });
+    await newOrder.save();
     res.json({ success: true, order: newOrder });
 });
 
-app.get('/api/orders/customer/:id', (req, res) => {
-    const orders = getFileData('orders.json');
-    res.json(orders.filter(o => o.customerId === req.params.id).reverse());
-});
-
-app.listen(PORT, () => console.log(`Zewar Heavy-Duty Admin API running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Zewar Boutique server running on port ${PORT}`));
