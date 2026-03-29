@@ -951,3 +951,54 @@ ul {
     opacity: 1;
     transform: translateY(0);
 }
+
+/* --- Mobile Optimization (App-like Feel) --- */
+@media (max-width: 768px) {
+    /* 1. Thumb-friendly Tap Targets */
+    a, button, .btn, .nav-icon { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+
+    /* 2. Sticky Mobile Header */
+    .nav-container { padding: 0 15px; position: relative; justify-content: center; }
+    .menu-toggle { display: flex; flex-direction: column; justify-content: center; position: absolute; left: 15px; }
+    .logo { margin: 0 auto; z-index: 1001; }
+    .nav-menu { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: var(--bg-dark); flex-direction: column; padding: 20px 0; border-top: 1px solid #222; box-shadow: 0 10px 20px rgba(0,0,0,0.5); z-index: 1000; }
+    .nav-menu.active { display: flex; }
+    .nav-menu li { width: 100%; text-align: center; }
+    .nav-icons { position: absolute !important; right: 15px; margin: 0 !important; top: 50%; transform: translateY(-50%); display:flex; gap: 5px !important; }
+
+    /* 2. Product Grid: 2 Column */
+    #dynamic-products-grid, .rings-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+    .product-card .p-img-wrapper { height: 180px !important; }
+    .product-card h3 { font-size: 1.1rem !important; margin: 0.2rem 0 !important;}
+    .product-card { padding-bottom: 0.5rem !important; }
+
+    /* 3. PDP Stacked Layout */
+    .pdp-split { flex-direction: column !important; gap: 1.5rem !important; }
+    .pdp-main-image-container img { height: 50vh !important; border-radius: 0; }
+    .pdp-container { padding: 80px 0 120px 0 !important; } 
+    .pdp-right { padding: 0 1.5rem !important; }
+    
+    /* Horizontal Swipeable Thumbnails */
+    .pdp-thumbnails { display: flex; flex-wrap: nowrap !important; overflow-x: auto; scroll-snap-type: x mandatory; padding: 0 1.5rem 10px 1.5rem; gap:10px; }
+    .pdp-thumb { flex: 0 0 70px; scroll-snap-align: center; }
+    .pdp-thumbnails::-webkit-scrollbar { display: none; }
+    
+    /* Sticky Add to Cart Bottom */
+    .pdp-add-cart {
+        position: fixed;
+        bottom: 0; left: 0; width: 100%;
+        margin: 0 !important; padding: 18px !important;
+        border-radius: 0 !important;
+        z-index: 1000;
+        box-shadow: 0 -5px 25px rgba(0,0,0,0.3);
+    }
+
+    /* 4. Cart Drawer as Bottom Sheet */
+    .cart-drawer {
+        width: 100% !important; height: 85vh !important;
+        bottom: -100% !important; top: auto !important; right: 0 !important;
+        border-radius: 20px 20px 0 0;
+        transition: bottom 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    }
+    .cart-drawer.open { bottom: 0 !important; right: 0 !important; }
+}

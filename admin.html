@@ -41,9 +41,10 @@
         <!-- Main Content -->
         <main class="main-content">
             <header class="topbar">
-                <div style="display:flex; align-items:center; gap: 20px;">
+                <div style="display:flex; align-items:center; gap: 15px;">
+                    <i class="fas fa-bars hamburger-admin" onclick="document.querySelector('.sidebar').classList.toggle('open')" style="display:none; font-size:1.5rem; color:var(--accent); cursor:pointer;"></i>
                     <h1 id="page-title">Dashboard Overview</h1>
-                    <button class="btn btn-primary" onclick="window.openPOSModal()" style="font-weight:bold; font-size: 0.9rem; padding: 8px 15px;"><i class="fas fa-cash-register"></i> Manual Order (POS)</button>
+                    <button class="btn btn-primary" onclick="window.openPOSModal()" style="font-weight:bold; font-size: 0.9rem; padding: 8px 15px;"><i class="fas fa-cash-register"></i> POS</button>
                 </div>
                 <div class="user-profile">Admin Portal <i class="fas fa-user-circle" style="font-size:1.5rem; margin-left:10px;"></i></div>
             </header>

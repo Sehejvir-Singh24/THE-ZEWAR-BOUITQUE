@@ -94,3 +94,31 @@ select.status-dropdown { background: var(--bg-input); color: var(--text-main); b
 /* Omnichannel Badges */
 .badge-source-web { color: #3498db; }
 .badge-source-manual { color: #e67e22; }
+
+/* --- Mobile Optimization (Admin App Feel) --- */
+@media (max-width: 900px) {
+    /* 1. Global tap targets */
+    button, .btn, a, input, select { min-height: 44px; }
+    
+    /* 2. SideBar Toggle */
+    .sidebar { position: fixed; left: -280px; height: 100vh; transition: left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); box-shadow: 10px 0 25px rgba(0,0,0,0.8); z-index: 9999; }
+    .sidebar.open { left: 0; }
+    
+    .topbar { padding: 15px 20px; }
+    .hamburger-admin { display: block !important; }
+    #page-title { font-size: 1.2rem; }
+    
+    /* 3. Data tables horizontally scrollable with frozen first column */
+    .admin-table { white-space: nowrap; }
+    .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 0; border-left: none; border-right: none; margin: 0 -20px; width: calc(100% + 40px); }
+    .admin-table th:first-child, .admin-table td:first-child {
+        position: sticky; left: 0; background: var(--bg-card); z-index: 5; border-right: 2px solid var(--border);
+    }
+    .admin-table th, .admin-table td { padding: 1rem; }
+    
+    /* Layout Adjustments */
+    .content-wrapper { padding: 20px; }
+    .kpi-grid { grid-template-columns: 1fr; gap: 15px; }
+    .form-row { flex-direction: column; gap: 0; }
+    .modal-content { padding: 1.5rem; max-height: 95vh; }
+}
