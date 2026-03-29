@@ -206,7 +206,46 @@ window.openEditProduct = function(id) {
         document.getElementById('edit-p-stock').value = p.stock || 0;
         document.getElementById('edit-p-price').value = p.price || 0;
         document.getElementById('edit-p-discount').value = p.discountPrice || p.price;
+        
+        const imgContainer = document.getElementById('edit-p-existing-images');
+        imgContainer.innerHTML = '';
+        if (p.images && p.images.length > 0) {
+            p.images.forEach(img => {
+                imgContainer.innerHTML += `
+                    <div style="position:relative; display:inline-block; border:1px solid #444; border-radius:4px; overflow:hidden;">
+                        <img src="${img}" width="80" height="80" style="object-fit:cover; display:block;">
+                        <button type="button" onclick="deleteProductImage('${p.id}', '${img}')" style="position:absolute; top:2px; right:2px; background:var(--danger); color:white; border:none; border-radius:50%; width:20px; height:20px; font-size:12px; cursor:pointer;" title="Delete Image">&times;</button>
+                    </div>
+                `;
+            });
+        } else {
+            imgContainer.innerHTML = '<span style="color:#aaa; font-size:0.85rem;">No images available</span>';
+        }
+
         document.getElementById('edit-product-modal').style.display = 'flex';
+    }
+}
+
+window.deleteProductImage = async function(productId, imageUrl) {
+    if(!confirm('Are you sure you want to remove this image?')) return;
+    try {
+        const res = await fetch(`${API}/products/${productId}/image`, {
+            method: 'DELETE',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ image: imageUrl })
+        });
+        const data = await res.json();
+        if(data.success) {
+            loadProducts();
+            const p = currentProducts.find(x => x.id === productId);
+            if (p) {
+                p.images = p.images.filter(i => i !== imageUrl);
+                if(p.image === imageUrl) p.image = p.images[0] || 'https://via.placeholder.com/300?text=No+Image';
+                openEditProduct(productId);
+            }
+        } else alert('Failed to delete image: ' + data.message);
+    } catch(err) {
+        alert('Error deleting image');
     }
 }
 

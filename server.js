@@ -104,6 +104,26 @@ app.put('/api/products/:id', upload.array('images', 5), (req, res) => {
     }
 });
 
+app.delete('/api/products/:id/image', (req, res) => {
+    let products = getFileData('products.json');
+    const index = products.findIndex(p => p.id === req.params.id);
+    if (index > -1) {
+        const imgToRemove = req.body.image;
+        if (products[index].images) {
+            products[index].images = products[index].images.filter(img => img !== imgToRemove);
+            if (products[index].image === imgToRemove) {
+                products[index].image = products[index].images[0] || 'https://via.placeholder.com/300?text=No+Image';
+            }
+            saveFileData('products.json', products);
+            res.json({ success: true, product: products[index] });
+        } else {
+            res.json({ success: false, message: 'No images found' });
+        }
+    } else {
+        res.status(404).json({ success: false, message: 'Product not found' });
+    }
+});
+
 app.delete('/api/products/:id', (req, res) => {
     let products = getFileData('products.json').filter(p => p.id !== req.params.id);
     saveFileData('products.json', products);
