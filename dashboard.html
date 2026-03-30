@@ -57,6 +57,7 @@
         </div>
     </footer>
 
+    <script src="config.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const user = JSON.parse(sessionStorage.getItem('zewar_customer') || localStorage.getItem('zewar_customer'));
@@ -69,7 +70,7 @@
                 document.getElementById('dash-orders').textContent = user.orders || 0;
                 
                 try {
-                    const res = await fetch(`/api/orders/customer/${user.id}`);
+                    const res = await fetch(`${window.BACKEND_URL || ''}/api/orders/customer/${user.id}`);
                     const orders = await res.json();
                     
                     const historyContainer = document.getElementById('dash-order-history');

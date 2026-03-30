@@ -117,6 +117,7 @@
         </div>
     </main>
 
+    <script src="config.js"></script>
     <script>
         let globalTotal = 0;
         
@@ -195,7 +196,7 @@
             btn.textContent = 'Authenticating Secure Payment...';
             
             try {
-                const res = await fetch('/api/orders/checkout', {
+                const res = await fetch((window.BACKEND_URL || '') + '/api/orders/checkout', {
                     method: 'POST', headers: {'Content-Type':'application/json'},
                     body: JSON.stringify({
                         customer: { email, phone, firstName: fname, lastName: lname, address },

@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(revealOnScroll, 100);
 
     // Fetch Products from Admin Backend
-    const API_URL = '/api/products';
+    const API_URL = (window.BACKEND_URL || '') + '/api/products';
     const productsGrid = document.getElementById('dynamic-products-grid');
 
     if (productsGrid) {
@@ -436,7 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!phone || phone.length < 8) return alert('Enter valid phone format');
         currentPhone = phone;
         
-        await fetch('/api/auth/otp', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({phone}) });
+        await fetch((window.BACKEND_URL || '') + '/api/auth/otp', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({phone}) });
         
         document.getElementById('auth-step-1').style.display = 'none';
         document.getElementById('auth-step-2').style.display = 'block';
@@ -469,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let otp = Array.from(boxes).map(b => b.value).join('');
         if(otp.length < 4) return alert('Enter full 4 digit OTP (hint: type 1234)');
         
-        const res = await fetch('/api/auth/verify', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({phone: currentPhone, otp}) });
+        const res = await fetch((window.BACKEND_URL || '') + '/api/auth/verify', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({phone: currentPhone, otp}) });
         const data = await res.json();
         
         if (data.success) {
@@ -484,7 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const mockName = names[Math.floor(Math.random()*names.length)];
         const mockEmail = mockName.split(' ')[0].toLowerCase() + '@example.com';
         
-        const res = await fetch('/api/auth/google', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({name: mockName, email: mockEmail}) });
+        const res = await fetch((window.BACKEND_URL || '') + '/api/auth/google', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({name: mockName, email: mockEmail}) });
         const data = await res.json();
         if(data.success) { 
             sessionStorage.setItem('zewar_customer', JSON.stringify(data.customer));
@@ -543,7 +543,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!email || !password) return alert('Please enter both your email and password.');
         
         try {
-            const res = await fetch('/api/auth/login', { 
+            const res = await fetch((window.BACKEND_URL || '') + '/api/auth/login', { 
                 method: 'POST', headers: {'Content-Type':'application/json'}, 
                 body: JSON.stringify({email, password}) 
             });
@@ -570,7 +570,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!document.getElementById('reg-email').classList.contains('valid')) return alert('Please enter a valid email address.');
 
         try {
-            const res = await fetch('/api/auth/register', { 
+            const res = await fetch((window.BACKEND_URL || '') + '/api/auth/register', { 
                 method: 'POST', headers: {'Content-Type':'application/json'}, 
                 body: JSON.stringify({firstName, lastName, email, password}) 
             });

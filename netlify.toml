@@ -1,0 +1,22 @@
+# Zewar Boutique — Netlify Deployment Configuration
+# This file tells Netlify how to serve the static frontend.
+# The backend (server.js) runs separately on Render.
+
+[build]
+  # No build step needed — this is a static HTML/CSS/JS site
+  publish = "."
+
+# Redirect all 404s back to index.html for client-side routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Security headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

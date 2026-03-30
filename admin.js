@@ -1,4 +1,4 @@
-const API = '/api';
+const API = (window.BACKEND_URL || '') + '/api';
 let chartInstance;
 
 window.login = function() {

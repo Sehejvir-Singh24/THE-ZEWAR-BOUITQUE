@@ -4,11 +4,31 @@ const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
 const mongoose = require('mongoose');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// --- CORS: allow Netlify frontend + local dev ---
+const allowedOrigins = [
+    process.env.FRONTEND_URL,          // e.g. https://zewar-boutique.netlify.app
+    'http://localhost:3000',
+    'http://127.0.0.1:5500',
+    'http://127.0.0.1:3000'
+].filter(Boolean);
+
+app.use(cors({
+    origin: function (origin, callback) {
+        // Allow requests with no origin (mobile apps, curl, Render health checks)
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS: ' + origin));
+        }
+    },
+    credentials: true
+}));
 app.use(express.json());
 app.use(express.static(__dirname));
 
@@ -17,13 +37,21 @@ mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('✅ Connected to MongoDB Atlas'))
     .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// --- Image Upload Setup ---
-const uploadDir = path.join(__dirname, 'images');
-const fs = require('fs');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, uploadDir),
-    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname.replace(/\s+/g, '-'))
+// --- Cloudinary Configuration ---
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key:    process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// --- Multer + Cloudinary Storage ---
+const storage = new CloudinaryStorage({
+    cloudinary,
+    params: {
+        folder: 'zewar-boutique',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+        transformation: [{ width: 1200, crop: 'limit', quality: 'auto' }]
+    }
 });
 const upload = multer({ storage });
 
@@ -71,7 +99,7 @@ app.get('/api/products', async (req, res) => res.json(await Product.find()));
 
 app.post('/api/products', upload.array('images', 5), async (req, res) => {
     let imageUrls = req.body.existingImages ? JSON.parse(req.body.existingImages) : [];
-    if (req.files) req.files.forEach(f => imageUrls.push(`./images/${f.filename}`));
+    if (req.files) req.files.forEach(f => imageUrls.push(f.path));
     if (req.body.imageUrl) imageUrls.push(req.body.imageUrl);
     const p = new Product({
         id: Date.now().toString(), title: req.body.title,
@@ -95,8 +123,8 @@ app.put('/api/products/:id', upload.array('images', 5), async (req, res) => {
     if (req.body.clearDiscount === 'true') p.discountPrice = null;
     if (req.files && req.files.length > 0) {
         if (!p.images) p.images = [p.image];
-        req.files.forEach(f => p.images.push(`./images/${f.filename}`));
-        if (p.image && p.image.includes('placeholder')) p.image = `./images/${req.files[0].filename}`;
+        req.files.forEach(f => p.images.push(f.path));
+        if (p.image && p.image.includes('placeholder')) p.image = req.files[0].path;
     }
     p.markModified('images');
     await p.save();
