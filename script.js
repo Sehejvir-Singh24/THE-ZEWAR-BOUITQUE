@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const stockBlock = p.stock <= 0 ? 
                         `<button class="btn btn-outline" style="padding: 10px 25px; font-size:0.95rem; width:100%; border:1px solid #ccc; color:#999; cursor:not-allowed;" disabled>Sold Out</button>` :
-                        `<button class="btn btn-primary" style="padding: 10px 25px; font-size:0.95rem; width:100%; border:none; cursor:pointer;" onclick="addToCart('${p.id}', '${p.title.replace(/'/g, "\\'")}', ${p.discountPrice || p.price}, '${p.image}')"><i class="fas fa-shopping-bag"></i> Add to Cart</button>`;
+                        `<button class="btn btn-primary" style="padding: 10px 25px; font-size:0.95rem; width:100%; border:none; cursor:pointer;" onclick="addToCart('${p.id}', '${p.title.replace(/'/g, "\\'")}', ${p.discountPrice || p.price}, '${p.image}', ${p.stock})"><i class="fas fa-shopping-bag"></i> Add to Cart</button>`;
 
                     card.innerHTML = `
                         <div class="p-img-wrapper" style="height:350px; overflow:hidden; background:#1a1a1a; display:flex; justify-content:center; align-items:center; cursor:pointer;" onclick="window.location.href='product.html?id=${p.id}'">
@@ -178,12 +178,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    window.addToCart = function(id, title, price, image) {
+    window.addToCart = function(id, title, price, image, maxStock) {
         const existing = cart.find(item => item.id === id);
         if (existing) {
+            if (maxStock !== undefined && existing.qty >= maxStock) {
+                alert(`Sorry, only ${maxStock} of this item are available in stock.`);
+                return;
+            }
             existing.qty = (existing.qty || 1) + 1;
+            existing.maxStock = maxStock;
         } else {
-            cart.push({ id, title, price: parseFloat(price), image, qty: 1 });
+            if (maxStock !== undefined && maxStock <= 0) {
+                alert(`Sorry, this item is out of stock.`);
+                return;
+            }
+            cart.push({ id, title, price: parseFloat(price), image, qty: 1, maxStock: maxStock });
         }
         localStorage.setItem('zewar_cart', JSON.stringify(cart));
         openCart();
@@ -192,7 +201,12 @@ document.addEventListener('DOMContentLoaded', () => {
     window.updateQty = function(id, delta) {
         const item = cart.find(i => i.id === id);
         if (item) {
-            item.qty += delta;
+            const newQty = item.qty + delta;
+            if (delta > 0 && item.maxStock !== undefined && newQty > item.maxStock) {
+                alert(`Sorry, only ${item.maxStock} of this item are available in stock.`);
+                return;
+            }
+            item.qty = newQty;
             if (item.qty <= 0) {
                 cart = cart.filter(i => i.id !== id);
             }
@@ -670,7 +684,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.querySelector('.pdp-description').innerText = product.description || 'No description available.';
                         
                         const addBtn = document.querySelector('.pdp-add-cart');
-                        addBtn.setAttribute('onclick', `addToCart('${product.id}', '${product.title.replace(/'/g, "\\'")}', ${product.discountPrice || product.price}, '${product.image}')`);
+                        addBtn.setAttribute('onclick', `addToCart('${product.id}', '${product.title.replace(/'/g, "\\'")}', ${product.discountPrice || product.price}, '${product.image}', ${product.stock})`);
                         if(product.stock <= 0) {
                             addBtn.textContent = 'Out of Stock';
                             addBtn.disabled = true;
