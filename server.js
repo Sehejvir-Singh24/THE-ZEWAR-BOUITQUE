@@ -13,6 +13,7 @@ const PORT = process.env.PORT || 3000;
 // --- CORS: allow Netlify frontend + local dev ---
 const allowedOrigins = [
     process.env.FRONTEND_URL,          // e.g. https://zewar-boutique.netlify.app
+    'https://thezewarboutique.netlify.app', // Explicitly allow the live frontend
     'http://localhost:3000',
     'http://127.0.0.1:5500',
     'http://127.0.0.1:3000'
