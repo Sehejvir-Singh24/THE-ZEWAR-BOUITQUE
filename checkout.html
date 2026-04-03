@@ -117,6 +117,7 @@
         </div>
     </main>
 
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script src="config.js"></script>
     <script>
         let globalTotal = 0;
@@ -208,8 +209,53 @@
                 if (data.success) {
                     if (sessionStorage.getItem('zewar_customer')) sessionStorage.setItem('zewar_customer', JSON.stringify(data.customer));
                     if (localStorage.getItem('zewar_customer')) localStorage.setItem('zewar_customer', JSON.stringify(data.customer));
-                    localStorage.removeItem('zewar_cart');
-                    window.location.href = 'dashboard.html';
+                    
+                    if (data.razorpayOrderId) {
+                        const options = {
+                            "key": data.razorpayKeyId,
+                            "amount": data.amount,
+                            "currency": "INR",
+                            "name": "The Zewar Boutique",
+                            "description": "Purchase",
+                            "order_id": data.razorpayOrderId,
+                            "handler": async function (response) {
+                                btn.textContent = 'Verifying Payment...';
+                                try {
+                                    const verifyRes = await fetch((window.BACKEND_URL || '') + '/api/orders/verify', {
+                                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                                        body: JSON.stringify(response)
+                                    });
+                                    const verifyData = await verifyRes.json();
+                                    if(verifyData.success) {
+                                        localStorage.removeItem('zewar_cart');
+                                        window.location.href = 'dashboard.html';
+                                    } else {
+                                        alert("Payment verification failed. Please contact support.");
+                                        window.location.href = 'dashboard.html';
+                                    }
+                                } catch(e) {
+                                    alert("Payment captured but verification connection dropped.");
+                                    window.location.href = 'dashboard.html';
+                                }
+                            },
+                            "prefill": {
+                                "name": fname + " " + lname,
+                                "email": email,
+                                "contact": phone
+                            },
+                            "theme": { "color": "#1a1a1a" }
+                        };
+                        const rzp = new Razorpay(options);
+                        rzp.on('payment.failed', function (response){
+                            alert(response.error.description);
+                            btn.disabled = false;
+                            btn.textContent = 'Complete Secure Checkout';
+                        });
+                        rzp.open();
+                    } else {
+                        localStorage.removeItem('zewar_cart');
+                        window.location.href = 'dashboard.html';
+                    }
                 } else {
                     alert(data.message || 'Checkout failed');
                     btn.disabled = false;

@@ -7,6 +7,9 @@ const mongoose = require('mongoose');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
+const crypto = require('crypto');
+const Razorpay = require('razorpay');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -239,8 +242,48 @@ app.post('/api/orders/checkout', async (req, res) => {
         await customer.save();
     }
     const newOrder = new Order({ id: `ORD-${Date.now().toString().slice(-6)}`, date: new Date().toISOString(), customerId: customer.id, customerName: customer.name, total: payload.total, status: 'Payment Pending', fulfillment: 'Processing', items: payload.cart, shippingAddress: payload.customer.address, source: 'Online - Web', paymentMode: 'Credit Card / UPI Gateway' });
-    await newOrder.save();
-    res.json({ success: true, order: newOrder, customer });
+    
+    if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+        try {
+            const razorpay = new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID, key_secret: process.env.RAZORPAY_KEY_SECRET });
+            const rpOrder = await razorpay.orders.create({
+                amount: Math.round(payload.total * 100), // in paise
+                currency: "INR",
+                receipt: newOrder.id
+            });
+            newOrder.razorpayOrderId = rpOrder.id;
+            await newOrder.save();
+            return res.json({ success: true, order: newOrder, customer, razorpayOrderId: rpOrder.id, razorpayKeyId: process.env.RAZORPAY_KEY_ID, amount: rpOrder.amount });
+        } catch (e) {
+            console.error("Razorpay error:", e);
+            return res.status(500).json({ success: false, message: 'Payment gateway error.' });
+        }
+    } else {
+        // Fallback for when Razorpay API Keys are not set
+        await newOrder.save();
+        res.json({ success: true, order: newOrder, customer });
+    }
+});
+
+app.post('/api/orders/verify', async (req, res) => {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSignature = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+                                    .update(body.toString())
+                                    .digest('hex');
+    
+    if (expectedSignature === razorpay_signature) {
+        const order = await Order.findOne({ razorpayOrderId: razorpay_order_id });
+        if (order) {
+            order.status = 'Paid';
+            await order.save();
+            res.json({ success: true, message: 'Payment verified successfully', order });
+        } else {
+            res.status(404).json({ success: false, message: 'Order not found' });
+        }
+    } else {
+        res.status(400).json({ success: false, message: 'Invalid signature' });
+    }
 });
 
 // --- POS ---
