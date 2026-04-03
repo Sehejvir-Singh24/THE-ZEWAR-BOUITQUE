@@ -182,7 +182,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const existing = cart.find(item => item.id === id);
         if (existing) {
             if (maxStock !== undefined && existing.qty >= maxStock) {
-                alert(`Sorry, only ${maxStock} of this item are available in stock.`);
+                alert(`You already have ${existing.qty} of this item in your cart, which is all we have in stock!`);
+                openCart();
                 return;
             }
             existing.qty = (existing.qty || 1) + 1;
@@ -203,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (item) {
             const newQty = item.qty + delta;
             if (delta > 0 && item.maxStock !== undefined && newQty > item.maxStock) {
-                alert(`Sorry, only ${item.maxStock} of this item are available in stock.`);
+                alert(`You already have ${item.qty} of this item in your cart, which is all we have in stock!`);
                 return;
             }
             item.qty = newQty;
