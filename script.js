@@ -273,12 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="auth-box">
                 <h2 style="font-family:var(--font-heading); margin-bottom:1.5rem; color:var(--primary-color);">Welcome to Zewar</h2>
                 
-                <button class="btn google-btn" onclick="googleLogin()">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="G" style="width:20px; height:20px;">
-                    Continue with Google
-                </button>
-                
-                <div class="auth-divider"><span>OR</span></div>
+
                 
                 <!-- Step 1: Phone Input -->
                 <div id="auth-step-1">
@@ -412,8 +407,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('auth-step-1').style.display = 'block';
         document.getElementById('auth-step-2').style.display = 'none';
         document.querySelector('.auth-fallback').style.display = 'block';
-        document.querySelector('.google-btn').style.display = 'flex';
-        document.querySelector('.auth-divider').style.display = 'flex';
         document.querySelector('.auth-box h2').style.display = 'block';
         
         document.getElementById('auth-email-login').style.display = 'none';
@@ -421,8 +414,8 @@ document.addEventListener('DOMContentLoaded', () => {
         clearInterval(timerInterval);
     }
     
-    closeAuthBtn.addEventListener('click', () => { if (!authRequired) closeAuth(); });
-    authOverlay.addEventListener('click', () => { if (!authRequired) closeAuth(); });
+    closeAuthBtn.addEventListener('click', () => { closeAuth(); });
+    authOverlay.addEventListener('click', () => { closeAuth(); });
 
     // Auth Gate: open modal if no session on page load
     const existingUser = sessionStorage.getItem('zewar_customer') || localStorage.getItem('zewar_customer');
@@ -537,8 +530,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('auth-step-1').style.display = 'none';
         document.getElementById('auth-step-2').style.display = 'none';
         document.querySelector('.auth-fallback').style.display = 'none';
-        document.querySelector('.google-btn').style.display = 'none';
-        document.querySelector('.auth-divider').style.display = 'none';
         document.querySelector('.auth-box h2').style.display = 'none';
 
         if (formType === 'login') {
