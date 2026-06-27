@@ -257,6 +257,11 @@
             appendMessage('assistant', data.reply);
             conversation.push({ role: 'assistant', content: data.reply });
 
+            // Show AI generated concept styling preview if any
+            if (data.generatedImageUrl) {
+                appendGeneratedImage(data.generatedImageUrl);
+            }
+
             // Show product cards if any
             if (data.products && data.products.length > 0) {
                 appendProductCards(data.products);
@@ -294,6 +299,23 @@
 
         msgEl.innerHTML = html;
         messagesContainer.appendChild(msgEl);
+        scrollToBottom();
+    }
+
+    // --- Append generated image ---
+    function appendGeneratedImage(url) {
+        const messagesContainer = document.getElementById('zewar-chat-messages');
+        const container = document.createElement('div');
+        container.className = 'zewar-chat-generated-image-container';
+        container.style.animation = 'zewar-msg-in 0.3s ease-out';
+        
+        container.innerHTML = `
+            <div class="generated-image-title">✨ AI Styling Concept Preview:</div>
+            <img src="${url}" class="zewar-generated-img" alt="AI Styling Preview" 
+                 onload="scrollToBottom()"
+                 onerror="this.parentElement.remove()">
+        `;
+        messagesContainer.appendChild(container);
         scrollToBottom();
     }
 

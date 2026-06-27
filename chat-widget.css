@@ -520,6 +520,37 @@
     display: block;
 }
 
+/* AI generated concept styling preview image */
+.zewar-chat-generated-image-container {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px dashed rgba(212, 175, 55, 0.2);
+    border-radius: 12px;
+    padding: 10px;
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    animation: zewar-msg-in 0.3s ease-out;
+}
+
+.generated-image-title {
+    font-size: 0.75rem;
+    color: var(--secondary-color, #D4AF37);
+    font-family: var(--font-body, 'Montserrat', sans-serif);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.zewar-generated-img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.08);
+    object-fit: cover;
+    aspect-ratio: 1 / 1;
+    background: #111;
+}
+
 /* ============================================================
    MOBILE RESPONSIVE — Bottom Sheet
    ============================================================ */

@@ -100,7 +100,7 @@ let chatModel = null;
 if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your_gemini_api_key_here') {
     genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     embeddingModel = genAI.getGenerativeModel({ model: 'gemini-embedding-2' });
-    chatModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    chatModel = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
     console.log('✅ Gemini AI initialized');
 } else {
     console.warn('⚠️  GEMINI_API_KEY not set — AI chat features disabled.');
@@ -533,7 +533,7 @@ app.post('/api/chat', async (req, res) => {
         const fullUserMessage = `[RETRIEVED PRODUCTS]\n${productContext}\n\n[USER QUESTION]\n${userMessageText}`;
 
         const modelInstance = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3.5-flash',
             systemInstruction: {
                 role: 'system',
                 parts: [{ text: STYLIST_SYSTEM_PROMPT }]
@@ -566,7 +566,26 @@ app.post('/api/chat', async (req, res) => {
                 image: p.image
             }));
 
-        res.json({ reply, products: visibleProducts });
+        let generatedImageUrl = null;
+        if (visibleProducts.length > 0) {
+            // Find outfit description (either from Stage 1 analysis, or general keywords from user text query)
+            let outfitDesc = 'traditional Indian outfit';
+            if (hasImage && searchPhrase.includes('. ')) {
+                // Extract description generated in Stage 1
+                outfitDesc = searchPhrase.split('. ').slice(1).join('. ').trim();
+            } else if (userMessageText.toLowerCase().includes('saree') || userMessageText.toLowerCase().includes('lehenga') || userMessageText.toLowerCase().includes('gown') || userMessageText.toLowerCase().includes('suit') || userMessageText.toLowerCase().includes('dress')) {
+                // If text query mentions outfit words, grab the text query as context
+                outfitDesc = userMessageText;
+            }
+
+            const topProduct = visibleProducts[0];
+            const promptText = `A professional catalog fashion photo of an Indian female model wearing a ${outfitDesc} styled with Zewar Boutique ${topProduct.title} ${topProduct.category}, studio lighting, highly detailed, premium jewelry boutique catalog.`;
+            
+            // Generate Pollinations.ai image URL
+            generatedImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=512&height=512&nologo=true&seed=${Math.floor(Math.random() * 100000)}`;
+        }
+
+        res.json({ reply, products: visibleProducts, generatedImageUrl });
 
     } catch (err) {
         console.error('❌ /api/chat error:', err);
