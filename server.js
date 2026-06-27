@@ -570,21 +570,38 @@ app.post('/api/chat', async (req, res) => {
 
         let generatedImageUrl = null;
         if (visibleProducts.length > 0) {
-            // Find outfit description (either from Stage 1 analysis, or general keywords from user text query)
             let outfitDesc = 'traditional Indian outfit';
-            if (hasImage && searchPhrase.includes('. ')) {
-                // Extract description generated in Stage 1
-                outfitDesc = searchPhrase.split('. ').slice(1).join('. ').trim();
-            } else if (userMessageText.toLowerCase().includes('saree') || userMessageText.toLowerCase().includes('lehenga') || userMessageText.toLowerCase().includes('gown') || userMessageText.toLowerCase().includes('suit') || userMessageText.toLowerCase().includes('dress')) {
-                // If text query mentions outfit words, grab the text query as context
-                outfitDesc = userMessageText;
+            let shouldGenerate = false;
+
+            if (hasImage) {
+                shouldGenerate = true;
+                if (searchPhrase.includes('. ')) {
+                    outfitDesc = searchPhrase.split('. ').slice(1).join('. ').trim();
+                }
+            } else {
+                const lowerText = userMessageText.toLowerCase();
+                const hasOutfitWord = lowerText.includes('saree') || lowerText.includes('sari') || 
+                                      lowerText.includes('lehenga') || lowerText.includes('gown') || 
+                                      lowerText.includes('suit') || lowerText.includes('dress') ||
+                                      lowerText.includes('anarkali') || lowerText.includes('kurti') ||
+                                      lowerText.includes('outfit');
+                                      
+                const hasStylingIntent = lowerText.includes('styl') || lowerText.includes('pair') || 
+                                         lowerText.includes('match') || lowerText.includes('wear') || 
+                                         lowerText.includes('go with') || lowerText.includes('suggest') || 
+                                         lowerText.includes('recommend');
+                
+                if (hasOutfitWord && hasStylingIntent) {
+                    shouldGenerate = true;
+                    outfitDesc = userMessageText;
+                }
             }
 
-            const topProduct = visibleProducts[0];
-            const promptText = `A professional catalog fashion photo of an Indian female model wearing a ${outfitDesc} styled with Zewar Boutique ${topProduct.title} ${topProduct.category}, studio lighting, highly detailed, premium jewelry boutique catalog.`;
-            
-            // Generate Pollinations.ai image URL
-            generatedImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=512&height=512&nologo=true&seed=${Math.floor(Math.random() * 100000)}`;
+            if (shouldGenerate) {
+                const topProduct = visibleProducts[0];
+                const promptText = `A professional catalog fashion photo of an Indian female model wearing a ${outfitDesc} styled with Zewar Boutique ${topProduct.title} ${topProduct.category}, studio lighting, highly detailed, premium jewelry boutique catalog.`;
+                generatedImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=512&height=512&nologo=true&seed=${Math.floor(Math.random() * 100000)}`;
+            }
         }
 
         res.json({ reply, products: visibleProducts, generatedImageUrl });
