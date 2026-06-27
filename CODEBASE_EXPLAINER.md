@@ -26,8 +26,8 @@ zewar-boutique/
 ├── styles.css                  # Core design system stylesheet (custom HSL tokens, animations)
 ├── admin.css                   # Admin panel styling
 │
-├── chat-widget.js              # Floating AI Stylist UI & conversation handler
-├── chat-widget.css             # Chat widget aesthetics (dark theme & gold accents)
+├── chat-widget.js              # Floating AI Stylist UI, conversation handler & interaction logic
+├── chat-widget.css             # Chat widget premium aesthetics (glassmorphism, aurora, animations)
 │
 ├── daemon/                     # Daemon service configurations
 ├── images/                     # Local asset images (logo, lifestyle covers)

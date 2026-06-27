@@ -43,7 +43,26 @@ This document records the incremental features, structural fixes, debugging path
 * **Implemented**:
   * Generated vector embeddings for all products in the database to prevent vector search from returning only the subset of embedded products.
   * Replaced the hard vector search limit with a broader candidate fetch (up to 40 items).
-  * Added dynamic category filtering logic in `/api/chat` that detects user intent from text. If a user asks for a specific category (e.g. "bracelet"), the backend returns up to 6 items of that category. If the query is general, it ensures balance by returning up to 2 items per category across the inventory.
+  * Added dynamic category filtering logic in `/api/chat` that detects user intent from text. Enforces a strict limit of exactly 2 items per category regardless of query type.
+
+### 6. Premium AI Chat Widget UI Overhaul
+* **Goal**: Make the AI styling assistant visually stunning and interactive for a live presentation audience.
+* **Implemented in `chat-widget.css`**:
+  * **Glassmorphism panel** — Deep frosted glass effect with luminous gold border glow and spring-bounce open animation.
+  * **Animated aurora header** — Slowly shifting gold gradient in the chat header with a moving shimmer sweep.
+  * **FAB attention rings** — Two animated expanding ring pulses on the floating button to draw the user's eye.
+  * **Avatar pulse** — Animated green ring around the stylist avatar indicating "Online" state.
+  * **Horizontal product card scroll** — Product cards laid out in a swipe-able horizontal row (like a premium app) instead of a vertical list.
+  * **Shimmer skeleton loading** — Animated shimmer placeholder cards shown while the AI fetches products.
+  * **Staggered card animations** — Each product card slides in with a subtle delay for a polished reveal.
+  * **Suggestion chip shimmer** — Hover effect with a sweeping light animation across suggestion chips.
+  * **Send button ripple** — Material-style click ripple on the send button.
+  * **Directional message bubbles** — User messages slide in from right; assistant messages slide in from left.
+* **Implemented in `chat-widget.js`**:
+  * **Typewriter welcome message** — Welcome text types out letter-by-letter when the chat opens.
+  * **Rotating input placeholders** — Placeholder text cycles through inspirational prompts every 3.5 seconds.
+  * **Sparkle burst on AI image** — A `✨ ✨ ✨` animation fires when the Pollinations AI styling preview finishes loading.
+  * **Improved markdown renderer** — Added support for `*italic*` rendering in AI responses.
 
 ---
 
