@@ -67,6 +67,11 @@ This document records the incremental features, structural fixes, debugging path
 * **Root Cause**: The initial plan configured the MongoDB Atlas index with `numDimensions: 768` (matching `text-embedding-004`). However, since we used `gemini-embedding-2`, it outputted 3072-dimensional vectors.
 * **Solution**: Instructed the user to configure the index with `numDimensions: 3072` inside their Atlas dashboard to match the vector size exactly.
 
+### 5. RAG Context Category Starvation on Compound Queries
+* **Issue**: Compound user requests (e.g. "suggest me bangles and a pendant set") returned matching items for only one category (necklaces) and completely starved the other (bangles).
+* **Root Cause**: The RAG vector search limits were set to `limit: 3`. High-scoring necklace products filled all 3 available slots, so the LLM did not receive any bangle products in the retrieval context.
+* **Solution**: Increased the database `$vectorSearch` and text search fallback limits to `6` in `server.js` to provide the LLM with a broader context pool containing products from both categories.
+
 ---
 
 ## 🔍 Diagnostics (Checked & Confirmed Working)
