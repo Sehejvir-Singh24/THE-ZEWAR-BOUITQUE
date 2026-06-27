@@ -107,6 +107,11 @@ This document records the incremental features, structural fixes, debugging path
 * **Root Cause**: Two issues: (1) 4 out of 11 products were missing vector embeddings, making them invisible to the search. (2) The vector search hard-limit starved categories if one category scored slightly higher.
 * **Solution**: Backfilled embeddings for all 11 products. Updated `server.js` to intelligently fetch 40 candidate products and dynamically enforce a limit per category based on whether the user asked for a specific item (up to 6) or a general outfit (up to 2 of every category).
 
+### 10. Too Many Category Suggestions & Spelling Edge Cases
+* **Issue**: The user reported that asking for "bangles" returned 4 items instead of the desired strict maximum of 2. Additionally, asking for a "pendent set" incorrectly fell back to general recommendations (6 items).
+* **Root Cause**: (1) The previous logic intentionally expanded the limit to 6 if only a single category was requested. (2) The backend category matcher looked for the exact spelling "pendant", missing the variation "pendent" provided by the user.
+* **Solution**: Hardcoded the `categoryLimit` to exactly `2` to enforce a strict boundary across all query types. Added `'pendent'` to the array of keyword checks for the Pendant Sets category.
+
 ---
 
 ## 🔍 Diagnostics (Checked & Confirmed Working)
