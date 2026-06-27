@@ -512,13 +512,38 @@ app.post('/api/chat', async (req, res) => {
             }).select('id title category price discountPrice description image stock').limit(40).lean();
         }
 
-        // Filter and limit: Select up to 2 in-stock items per category available in the inventory
+        // Dynamic category filtering based on user intent
+        const lowerText = userMessageText.toLowerCase();
+        const wantsNecklace = lowerText.includes('necklace') || lowerText.includes('chain') || lowerText.includes('choker') || lowerText.includes('haar');
+        const wantsBangles = lowerText.includes('bangle') || lowerText.includes('bracelet') || lowerText.includes('kada') || lowerText.includes('chudi');
+        const wantsPendant = lowerText.includes('pendant') || lowerText.includes('locket');
+        
+        const wantsGeneral = !wantsNecklace && !wantsBangles && !wantsPendant;
+
+        let categoryLimit = 2; // Default 2 per category for general mix
+        const requestedCategoriesCount = [wantsNecklace, wantsBangles, wantsPendant].filter(Boolean).length;
+        if (requestedCategoriesCount === 1) {
+            categoryLimit = 6;
+        } else if (requestedCategoriesCount === 2) {
+            categoryLimit = 3;
+        }
+
         const inStockProducts = retrievedProducts.filter(p => (p.stock || 0) > 0);
         const grouped = {};
+        
         inStockProducts.forEach(p => {
             const cat = p.category || 'Uncategorized';
-            if (!grouped[cat]) grouped[cat] = [];
-            grouped[cat].push(p);
+            
+            // Check if this product's category matches the user's explicit request
+            const isMatch = wantsGeneral || 
+                            (wantsNecklace && cat === 'Necklaces') ||
+                            (wantsBangles && cat === 'Bangles & Bracelets') ||
+                            (wantsPendant && cat === 'Pendant Sets');
+                            
+            if (isMatch) {
+                if (!grouped[cat]) grouped[cat] = [];
+                grouped[cat].push(p);
+            }
         });
 
         const selectedProducts = [];
@@ -527,8 +552,9 @@ app.post('/api/chat', async (req, res) => {
             if (items[0] && items[0].score !== undefined) {
                 items.sort((a, b) => b.score - a.score);
             }
-            selectedProducts.push(...items.slice(0, 2));
+            selectedProducts.push(...items.slice(0, categoryLimit));
         });
+        
         retrievedProducts = selectedProducts;
 
         // 4. Build context for LLM
