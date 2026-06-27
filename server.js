@@ -1,4 +1,8 @@
 require('dotenv').config();
+const dns = require('dns');
+// Force Google DNS for mobile hotspots/unreliable carrier DNS
+dns.setServers(['8.8.8.8', '8.8.4.4']);
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -9,6 +13,7 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const crypto = require('crypto');
 const Razorpay = require('razorpay');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -63,7 +68,8 @@ const upload = multer({ storage });
 const productSchema = new mongoose.Schema({
     id: String, title: String, sku: String, price: Number, costPrice: Number,
     discountPrice: Number, stock: Number, category: String, description: String,
-    images: [String], image: String
+    images: [String], image: String,
+    descriptionEmbedding: [Number]
 }, { strict: false });
 
 const orderSchema = new mongoose.Schema({
@@ -85,6 +91,45 @@ const Product  = mongoose.model('Product',  productSchema);
 const Order    = mongoose.model('Order',    orderSchema);
 const Customer = mongoose.model('Customer', customerSchema);
 const Promo    = mongoose.model('Promo',    promotionSchema);
+
+// --- Gemini AI Setup ---
+let genAI = null;
+let embeddingModel = null;
+let chatModel = null;
+
+if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your_gemini_api_key_here') {
+    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    embeddingModel = genAI.getGenerativeModel({ model: 'gemini-embedding-2' });
+    chatModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    console.log('✅ Gemini AI initialized');
+} else {
+    console.warn('⚠️  GEMINI_API_KEY not set — AI chat features disabled.');
+}
+
+// Helper: build text for embedding a product
+function buildEmbeddingText(product) {
+    const parts = [
+        product.title || '',
+        product.category ? `Category: ${product.category}` : '',
+        product.description || '',
+        product.price ? `Price: ₹${product.price}` : '',
+        product.discountPrice ? `Sale Price: ₹${product.discountPrice}` : ''
+    ];
+    return parts.filter(Boolean).join('. ').trim();
+}
+
+// Helper: generate embedding vector for a product and save it
+async function embedProduct(product) {
+    if (!embeddingModel) return;
+    try {
+        const text = buildEmbeddingText(product);
+        const result = await embeddingModel.embedContent(text);
+        product.descriptionEmbedding = result.embedding.values;
+        await product.save();
+    } catch (err) {
+        console.error(`⚠️  Embedding failed for ${product.title}:`, err.message);
+    }
+}
 
 // --- API ROUTES ---
 
@@ -115,6 +160,8 @@ app.post('/api/products', upload.array('images', 5), async (req, res) => {
         image: imageUrls[0] || 'https://via.placeholder.com/300?text=No+Image'
     });
     await p.save();
+    // Auto-generate embedding for new product (non-blocking)
+    embedProduct(p).catch(() => {});
     res.json(p);
 });
 
@@ -132,6 +179,8 @@ app.put('/api/products/:id', upload.array('images', 5), async (req, res) => {
     }
     p.markModified('images');
     await p.save();
+    // Re-generate embedding on update (non-blocking)
+    embedProduct(p).catch(() => {});
     res.json({ success: true, product: p });
 });
 
@@ -307,5 +356,227 @@ app.post('/api/admin/pos-order', async (req, res) => {
     await newOrder.save();
     res.json({ success: true, order: newOrder });
 });
+
+// --- AI Chat Route (RAG Pipeline) ---
+
+// Simple in-memory rate limiter for /api/chat
+const chatRateLimit = {};
+const CHAT_RATE_LIMIT = 10; // max requests per minute per IP
+const CHAT_RATE_WINDOW = 60 * 1000; // 1 minute
+
+function checkChatRateLimit(ip) {
+    const now = Date.now();
+    if (!chatRateLimit[ip]) chatRateLimit[ip] = [];
+    chatRateLimit[ip] = chatRateLimit[ip].filter(t => now - t < CHAT_RATE_WINDOW);
+    if (chatRateLimit[ip].length >= CHAT_RATE_LIMIT) return false;
+    chatRateLimit[ip].push(now);
+    return true;
+}
+
+// System prompt with static category-level care tips
+const STYLIST_SYSTEM_PROMPT = `You are the personal styling assistant for The Zewar Boutique, an Indian artificial (imitation) jewelry brand.
+
+Your personality: Warm, knowledgeable, and fashion-forward. Think of yourself as a trusted friend who happens to be a jewelry expert.
+
+RULES:
+1. ONLY recommend products from the [RETRIEVED PRODUCTS] section below. NEVER invent or hallucinate products.
+2. Always mention the product name, price (use ₹), and category when recommending.
+3. When the user describes an outfit, provide specific pairing advice explaining WHY a piece works (color theory, neckline compatibility, occasion suitability).
+4. For care questions, ONLY give the advice in the CARE GUIDE below. NEVER suggest baking soda, toothpaste, vinegar, lemon juice, or any abrasive/acidic substance on artificial jewelry — these DESTROY the plating.
+5. If the user asks something unrelated to jewelry, fashion, or styling, politely say: "I'm best at helping with jewelry and styling! Is there a piece you'd like help with?"
+6. Format product links as: [Product Name](/product.html?id=PRODUCT_ID)
+7. Keep responses concise (under 150 words) and warm.
+8. If no retrieved products match, say so honestly and suggest browsing the full collection.
+
+--- JEWELRY CARE GUIDE (by category) ---
+
+NECKLACES & PENDANT SETS:
+• Store flat in an airtight zip-lock or velvet pouch to avoid tangling and oxidation.
+• Apply perfume and makeup BEFORE wearing — chemicals tarnish plating.
+• Wipe gently with a soft dry microfiber cloth after each wear.
+• Remove before showering, swimming, or exercising.
+
+EARRINGS (Studs, Hoops, Drops, Jhumkas):
+• Clean posts with a dry cotton swab to prevent ear irritation.
+• Store each pair separately to prevent scratching.
+• Avoid sleeping in heavy earrings — this loosens clasps.
+
+BANGLES & BRACELETS:
+• Remove before washing hands or doing dishes.
+• Store stacked with soft cloth between each bangle to prevent scratches.
+• Gold-plated bangles should NEVER touch silver pieces — this causes discoloration.
+
+RINGS:
+• Remove before applying hand cream or sanitizer.
+• Store in individual compartments.
+• Avoid wearing in the gym — sweat accelerates tarnishing.
+
+GENERAL (ALL CATEGORIES):
+• Keep away from water, perfume, deodorant, and hairspray.
+• Store in airtight pouches with silica gel packets to absorb moisture.
+• NEVER use chemical jewelry cleaners designed for real gold/silver.
+• If tarnishing begins, gently rub with a dry soft cloth — do NOT scrub.
+---`;
+
+app.post('/api/chat', async (req, res) => {
+    // Rate limiting
+    const clientIp = req.headers['x-forwarded-for'] || req.ip || 'unknown';
+    if (!checkChatRateLimit(clientIp)) {
+        return res.status(429).json({ reply: "You're sending messages too quickly. Please wait a moment and try again. 🙏", products: [] });
+    }
+
+    // Check if AI is configured
+    if (!genAI || !embeddingModel || !chatModel) {
+        return res.status(503).json({ reply: "The AI stylist is currently unavailable. Please try again later.", products: [] });
+    }
+
+    const { message, image, mimeType, history } = req.body || {};
+    
+    // Prevent empty requests (allow empty text if image is uploaded)
+    const hasText = message && typeof message === 'string' && message.trim().length > 0;
+    const hasImage = image && typeof image === 'string' && image.trim().length > 0;
+
+    if (!hasText && !hasImage) {
+        return res.status(400).json({ reply: "Please type a message or upload an outfit photo so I can help you! 💎", products: [] });
+    }
+
+    const userMessageText = hasText ? message.trim() : "Suggest matching jewelry for this outfit";
+
+    try {
+        let searchPhrase = userMessageText;
+        let imagePart = null;
+
+        // Stage 1: Analyze the image if uploaded to get a styling search query
+        if (hasImage) {
+            imagePart = {
+                inlineData: {
+                    data: image,
+                    mimeType: mimeType || 'image/jpeg'
+                }
+            };
+
+            try {
+                // Use the main chat model to describe the image in a search-friendly phrase
+                const analysisResult = await chatModel.generateContent([
+                    imagePart,
+                    "Describe this outfit's color, pattern, neckline, and style in under 15 words for a database search query."
+                ]);
+                const imageDescription = analysisResult.response.text().trim();
+                console.log('🔍 Image description generated:', imageDescription);
+                
+                // Combine the user text query and the image description to find products
+                searchPhrase = `${userMessageText}. ${imageDescription}`;
+            } catch (imgErr) {
+                console.warn('⚠️ Image analysis failed, falling back to message text:', imgErr.message);
+            }
+        }
+
+        // 2. Embed the search query (could be text query + image description)
+        const queryEmbedResult = await embeddingModel.embedContent(searchPhrase);
+        const queryVector = queryEmbedResult.embedding.values;
+
+        // 3. Vector Search — find top 3 relevant products
+        let retrievedProducts = [];
+        try {
+            retrievedProducts = await Product.aggregate([
+                {
+                    $vectorSearch: {
+                        index: 'product_embeddings',
+                        path: 'descriptionEmbedding',
+                        queryVector: queryVector,
+                        numCandidates: 20,
+                        limit: 3
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        id: 1, title: 1, category: 1, price: 1,
+                        discountPrice: 1, description: 1, image: 1, stock: 1,
+                        score: { $meta: 'vectorSearchScore' }
+                    }
+                }
+            ]);
+        } catch (vsErr) {
+            console.warn('⚠️ Vector search failed (index may not exist yet):', vsErr.message);
+            // Fallback: simple text search
+            const searchRegex = new RegExp(searchPhrase.split(/\s+/).join('|'), 'i');
+            retrievedProducts = await Product.find({
+                $or: [
+                    { title: searchRegex },
+                    { category: searchRegex },
+                    { description: searchRegex }
+                ]
+            }).select('id title category price discountPrice description image stock').limit(3).lean();
+        }
+
+        // 4. Build context for LLM
+        let productContext = 'No matching products found in our catalog.';
+        if (retrievedProducts.length > 0) {
+            productContext = retrievedProducts.map((p, i) => {
+                const price = p.discountPrice || p.price;
+                return `Product ${i + 1}:\n  Name: ${p.title}\n  Category: ${p.category}\n  Price: ₹${price}\n  Description: ${p.description || 'N/A'}\n  Link ID: ${p.id}\n  In Stock: ${(p.stock || 0) > 0 ? 'Yes' : 'Out of Stock'}`;
+            }).join('\n\n');
+        }
+
+        // 5. Build conversation for Gemini
+        const conversationHistory = (history || []).slice(-MAX_HISTORY).map(h => ({
+            role: h.role === 'user' ? 'user' : 'model',
+            parts: [{ text: h.content }]
+        }));
+
+        // Remove the last user message from history since we send it in the session message
+        if (conversationHistory.length > 0 && conversationHistory[conversationHistory.length - 1].role === 'user') {
+            conversationHistory.pop();
+        }
+
+        const fullUserMessage = `[RETRIEVED PRODUCTS]\n${productContext}\n\n[USER QUESTION]\n${userMessageText}`;
+
+        const modelInstance = genAI.getGenerativeModel({
+            model: 'gemini-2.5-flash',
+            systemInstruction: {
+                role: 'system',
+                parts: [{ text: STYLIST_SYSTEM_PROMPT }]
+            }
+        });
+
+        const chat = modelInstance.startChat({
+            history: conversationHistory
+        });
+
+        // Stage 3: Call chat completion (passing the image generative part if it exists)
+        let result;
+        if (imagePart) {
+            result = await chat.sendMessage([fullUserMessage, imagePart]);
+        } else {
+            result = await chat.sendMessage(fullUserMessage);
+        }
+        const reply = result.response.text();
+
+        // 6. Return response
+        // Only send products that are in stock
+        const visibleProducts = retrievedProducts
+            .filter(p => (p.stock || 0) > 0)
+            .map(p => ({
+                id: p.id,
+                title: p.title,
+                category: p.category,
+                price: p.price,
+                discountPrice: p.discountPrice,
+                image: p.image
+            }));
+
+        res.json({ reply, products: visibleProducts });
+
+    } catch (err) {
+        console.error('❌ /api/chat error:', err);
+        res.status(500).json({
+            reply: "I ran into an issue processing your request. Please try again! 🙏",
+            products: []
+        });
+    }
+});
+
+const MAX_HISTORY = 10;
 
 app.listen(PORT, () => console.log(`Zewar Boutique server running on port ${PORT}`));
