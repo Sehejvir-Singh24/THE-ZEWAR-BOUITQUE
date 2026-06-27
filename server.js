@@ -484,8 +484,8 @@ app.post('/api/chat', async (req, res) => {
                         index: 'product_embeddings',
                         path: 'descriptionEmbedding',
                         queryVector: queryVector,
-                        numCandidates: 20,
-                        limit: 3
+                        numCandidates: 40,
+                        limit: 6
                     }
                 },
                 {
@@ -507,7 +507,7 @@ app.post('/api/chat', async (req, res) => {
                     { category: searchRegex },
                     { description: searchRegex }
                 ]
-            }).select('id title category price discountPrice description image stock').limit(3).lean();
+            }).select('id title category price discountPrice description image stock').limit(6).lean();
         }
 
         // 4. Build context for LLM
