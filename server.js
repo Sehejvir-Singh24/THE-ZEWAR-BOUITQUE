@@ -477,7 +477,7 @@ app.post('/api/chat', async (req, res) => {
         const queryEmbedResult = await embeddingModel.embedContent(searchPhrase);
         const queryVector = queryEmbedResult.embedding.values;
 
-        // 3. Vector Search — find top 3 relevant products
+        // 3. Vector Search — find relevant products
         let retrievedProducts = [];
         try {
             retrievedProducts = await Product.aggregate([
@@ -487,7 +487,7 @@ app.post('/api/chat', async (req, res) => {
                         path: 'descriptionEmbedding',
                         queryVector: queryVector,
                         numCandidates: 40,
-                        limit: 6
+                        limit: 40
                     }
                 },
                 {
@@ -509,8 +509,27 @@ app.post('/api/chat', async (req, res) => {
                     { category: searchRegex },
                     { description: searchRegex }
                 ]
-            }).select('id title category price discountPrice description image stock').limit(6).lean();
+            }).select('id title category price discountPrice description image stock').limit(40).lean();
         }
+
+        // Filter and limit: Select up to 2 in-stock items per category available in the inventory
+        const inStockProducts = retrievedProducts.filter(p => (p.stock || 0) > 0);
+        const grouped = {};
+        inStockProducts.forEach(p => {
+            const cat = p.category || 'Uncategorized';
+            if (!grouped[cat]) grouped[cat] = [];
+            grouped[cat].push(p);
+        });
+
+        const selectedProducts = [];
+        Object.keys(grouped).forEach(cat => {
+            const items = grouped[cat];
+            if (items[0] && items[0].score !== undefined) {
+                items.sort((a, b) => b.score - a.score);
+            }
+            selectedProducts.push(...items.slice(0, 2));
+        });
+        retrievedProducts = selectedProducts;
 
         // 4. Build context for LLM
         let productContext = 'No matching products found in our catalog.';
