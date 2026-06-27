@@ -516,17 +516,11 @@ app.post('/api/chat', async (req, res) => {
         const lowerText = userMessageText.toLowerCase();
         const wantsNecklace = lowerText.includes('necklace') || lowerText.includes('chain') || lowerText.includes('choker') || lowerText.includes('haar');
         const wantsBangles = lowerText.includes('bangle') || lowerText.includes('bracelet') || lowerText.includes('kada') || lowerText.includes('chudi');
-        const wantsPendant = lowerText.includes('pendant') || lowerText.includes('locket');
+        const wantsPendant = lowerText.includes('pendant') || lowerText.includes('pendent') || lowerText.includes('locket');
         
         const wantsGeneral = !wantsNecklace && !wantsBangles && !wantsPendant;
 
-        let categoryLimit = 2; // Default 2 per category for general mix
-        const requestedCategoriesCount = [wantsNecklace, wantsBangles, wantsPendant].filter(Boolean).length;
-        if (requestedCategoriesCount === 1) {
-            categoryLimit = 6;
-        } else if (requestedCategoriesCount === 2) {
-            categoryLimit = 3;
-        }
+        const categoryLimit = 2; // Strict limit of 2 items per category based on user request
 
         const inStockProducts = retrievedProducts.filter(p => (p.stock || 0) > 0);
         const grouped = {};
