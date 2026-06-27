@@ -101,7 +101,7 @@ let chatModel = null;
 if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your_gemini_api_key_here') {
     genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     embeddingModel = genAI.getGenerativeModel({ model: 'gemini-embedding-2' });
-    chatModel = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
+    chatModel = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite' });
     console.log('✅ Gemini AI initialized');
 } else {
     console.warn('⚠️  GEMINI_API_KEY not set — AI chat features disabled.');
@@ -535,7 +535,7 @@ app.post('/api/chat', async (req, res) => {
         const fullUserMessage = `[RETRIEVED PRODUCTS]\n${productContext}\n\n[USER QUESTION]\n${userMessageText}`;
 
         const modelInstance = genAI.getGenerativeModel({
-            model: 'gemini-3.5-flash',
+            model: 'gemini-3.1-flash-lite',
             systemInstruction: {
                 role: 'system',
                 parts: [{ text: STYLIST_SYSTEM_PROMPT }]
