@@ -30,6 +30,13 @@ This document records the incremental features, structural fixes, debugging path
     2. Description text is embedded and searched via Atlas Vector Search (Stage 2).
     3. Retrieved products, query, and image are synthesized for the final recommendation (Stage 3).
 
+### 4. AI Image Concept Preview
+* **Goal**: Show users an AI-generated preview of a model wearing their described outfit styled with the top recommended jewelry.
+* **Implemented**:
+  * Added styling and container element updates in `chat-widget.js` and `chat-widget.css` to render preview images.
+  * Formulated dynamic image prompts in `server.js` combining the outfit description (analyzed or user-text) and top recommended product category and details.
+  * Integrated Pollinations.ai as a free, high-speed, and unlimited text-to-image API.
+
 ---
 
 ## 🛠️ Errors Encountered & Fixed
@@ -71,6 +78,11 @@ This document records the incremental features, structural fixes, debugging path
 * **Issue**: Compound user requests (e.g. "suggest me bangles and a pendant set") returned matching items for only one category (necklaces) and completely starved the other (bangles).
 * **Root Cause**: The RAG vector search limits were set to `limit: 3`. High-scoring necklace products filled all 3 available slots, so the LLM did not receive any bangle products in the retrieval context.
 * **Solution**: Increased the database `$vectorSearch` and text search fallback limits to `6` in `server.js` to provide the LLM with a broader context pool containing products from both categories.
+
+### 6. Google Imagen 3/4 Paid Plan Restriction (400)
+* **Issue**: Direct calls to `imagen-4.0-generate-001:predict` returned `400 Bad Request` stating "Imagen 3 is only available on paid plans."
+* **Root Cause**: Google AI Studio disables access to its image generation models for free-tier developer keys.
+* **Solution**: Replaced the Google Imagen API calls with the open, high-quality, and completely free **Pollinations.ai** API (`https://image.pollinations.ai/prompt/...`), which works instantly and requires no keys or billing configurations.
 
 ---
 

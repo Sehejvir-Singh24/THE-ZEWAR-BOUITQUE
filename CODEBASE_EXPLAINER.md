@@ -54,10 +54,11 @@ Built on **Express.js**, running on Node.
 ### 3. AI Styling Assistant (RAG Pipeline)
 Integrated natively via `@google/generative-ai` with MongoDB Atlas Vector Search:
 * **Vector Generation**: Converts text representations of products into 3072-dimensional arrays using `gemini-embedding-2` in [generate-embeddings.js](file:///D:/projects/zewar-boutique/generate-embeddings.js) and dynamically inside [server.js](file:///D:/projects/zewar-boutique/server.js#L110-L136) on product creation or editing.
-* **Two-Stage Multimodal RAG**:
+* **Three-Stage Multimodal RAG + AI Styling Preview**:
   1. **Image Interpretation**: When a user uploads a photo, `gemini-2.5-flash` analyzes the outfit to produce a descriptive search query.
   2. **Vector Retrieval**: Computes query embeddings and queries MongoDB using `$vectorSearch` to fetch the top 6 matching jewelry items (increased from 3 to prevent category starvation on compound queries like bangles + pendant sets).
   3. **Contextual Synthesizer**: Feeds matching product metadata, conversation history, the outfit image, and the user's styling query to the model to generate a rich markdown stylist recommendation.
+  4. **AI Concept Styling Preview**: Formulates a text prompt combining the outfit description (either analyzed from the image or extracted from user text) and the top recommended jewelry item, generating a live image on-the-fly using the free Pollinations.ai API to display in the chat bubble.
 * **Security & Control**: Rate-limited dynamically to prevent model key depletion.
 
 ### 4. Checkout & Payments
