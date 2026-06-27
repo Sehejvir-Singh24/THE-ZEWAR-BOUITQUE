@@ -38,7 +38,8 @@ app.use(cors({
     },
     credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(express.static(__dirname));
 
 // --- Connect to MongoDB ---
@@ -468,6 +469,7 @@ app.post('/api/chat', async (req, res) => {
                 searchPhrase = `${userMessageText}. ${imageDescription}`;
             } catch (imgErr) {
                 console.warn('⚠️ Image analysis failed, falling back to message text:', imgErr.message);
+                imagePart = null;
             }
         }
 
