@@ -36,6 +36,14 @@ This document records the incremental features, structural fixes, debugging path
   * Added styling and container element updates in `chat-widget.js` and `chat-widget.css` to render preview images.
   * Formulated dynamic image prompts in `server.js` combining the outfit description (analyzed or user-text) and top recommended product category and details.
   * Integrated Pollinations.ai as a free, high-speed, and unlimited text-to-image API.
+  * Made image generation conditional so it only triggers if the user explicitly uploaded an outfit or mentioned styling keywords (e.g., *saree*, *lehenga*, *match*).
+
+### 5. Smart Category Matching for Balanced Recommendations
+* **Goal**: Fix the RAG retrieval returning the exact same products by ensuring a diverse or specifically targeted mix.
+* **Implemented**:
+  * Generated vector embeddings for all products in the database to prevent vector search from returning only the subset of embedded products.
+  * Replaced the hard vector search limit with a broader candidate fetch (up to 40 items).
+  * Added dynamic category filtering logic in `/api/chat` that detects user intent from text. If a user asks for a specific category (e.g. "bracelet"), the backend returns up to 6 items of that category. If the query is general, it ensures balance by returning up to 2 items per category across the inventory.
 
 ---
 
@@ -83,6 +91,21 @@ This document records the incremental features, structural fixes, debugging path
 * **Issue**: Direct calls to `imagen-4.0-generate-001:predict` returned `400 Bad Request` stating "Imagen 3 is only available on paid plans."
 * **Root Cause**: Google AI Studio disables access to its image generation models for free-tier developer keys.
 * **Solution**: Replaced the Google Imagen API calls with the open, high-quality, and completely free **Pollinations.ai** API (`https://image.pollinations.ai/prompt/...`), which works instantly and requires no keys or billing configurations.
+
+### 7. Gemini `429 Too Many Requests` on Image Uploads (Free Tier Limits)
+* **Issue**: The server crashed when processing image uploads due to exceeding rate limits on `gemini-2.5-flash`.
+* **Root Cause**: The Google AI Studio free tier limits `gemini-1.5-flash` and `gemini-2.5-flash` variants to very strict quotas (sometimes 20 requests/day depending on account state).
+* **Solution**: Downgraded to `gemini-3.1-flash-lite`, which allows a generous 1,500 daily requests and 15 requests per minute, easily handling both the image analysis (Stage 1) and text generation (Stage 3) pipelines without interruption.
+
+### 8. `Payload Too Large` Error on Base64 Image Uploads
+* **Issue**: Uploading outfit photos caused a 413 Payload Too Large error.
+* **Root Cause**: Express `body-parser` has a default limit of 100KB, which is too small for Base64 encoded images.
+* **Solution**: Increased the limit in `server.js` using `app.use(express.json({ limit: '10mb' }));`.
+
+### 9. RAG Returning the Same Products Repeatedly
+* **Issue**: The styling assistant repeatedly suggested the exact same 6 products regardless of the query.
+* **Root Cause**: Two issues: (1) 4 out of 11 products were missing vector embeddings, making them invisible to the search. (2) The vector search hard-limit starved categories if one category scored slightly higher.
+* **Solution**: Backfilled embeddings for all 11 products. Updated `server.js` to intelligently fetch 40 candidate products and dynamically enforce a limit per category based on whether the user asked for a specific item (up to 6) or a general outfit (up to 2 of every category).
 
 ---
 
