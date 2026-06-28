@@ -32,11 +32,25 @@
 
     // --- Inject HTML ---
     const widgetHTML = `
-        <!-- FAB -->
-        <button id="zewar-chat-fab" aria-label="Open AI Stylist Chat">
-            <span class="fab-icon-chat"><i class="fas fa-wand-magic-sparkles"></i></span>
-            <span class="fab-icon-close"><i class="fas fa-times"></i></span>
-        </button>
+        <!-- FAB Wrapper -->
+        <div id="zewar-chat-fab-wrapper">
+            <!-- Notification Tooltip -->
+            <div id="zewar-chat-tooltip">
+                <button class="tooltip-dismiss" aria-label="Dismiss">&times;</button>
+                <div class="tooltip-title"><i class="fas fa-gem"></i> Zewar Stylist is here!</div>
+                <span>Ask me anything — find the perfect jewellery just for you ✨</span>
+            </div>
+            <!-- FAB -->
+            <button id="zewar-chat-fab" aria-label="Open AI Stylist Chat">
+                <div class="fab-icon-wrapper">
+                    <span class="fab-icon-chat"><i class="fas fa-wand-magic-sparkles"></i></span>
+                    <span class="fab-icon-close"><i class="fas fa-times"></i></span>
+                </div>
+                <span class="fab-label">Chat &amp; Shop</span>
+                <!-- Notification Badge -->
+                <span id="zewar-chat-notif-badge">1</span>
+            </button>
+        </div>
 
         <!-- Chat Panel -->
         <div id="zewar-chat-panel" role="dialog" aria-label="Zewar AI Stylist">
@@ -45,7 +59,7 @@
                 <div class="chat-avatar"><i class="fas fa-gem"></i></div>
                 <div class="chat-header-info">
                     <h4>Zewar Stylist</h4>
-                    <span>Online</span>
+                    <span>Online &mdash; here to help you shop</span>
                 </div>
                 <button class="chat-close-btn" aria-label="Close chat">&times;</button>
             </div>
@@ -70,10 +84,62 @@
             <!-- Footer -->
             <div id="zewar-chat-footer-tag">Powered by Zewar AI ✨</div>
         </div>
+
+        <!-- Sticky Bottom Bar -->
+        <div id="zewar-chat-sticky-bar">
+            <div class="sticky-bar-avatar"><i class="fas fa-gem"></i></div>
+            <div class="sticky-bar-text">
+                <h5>Zewar AI Stylist</h5>
+                <p>Ask me to find the perfect jewellery for you ✨</p>
+            </div>
+            <button class="sticky-bar-btn" id="zewar-sticky-open-btn">
+                <i class="fas fa-comments"></i> Chat Now
+            </button>
+            <button class="sticky-bar-dismiss" id="zewar-sticky-dismiss" aria-label="Dismiss">&times;</button>
+        </div>
+    `;
+
+    // Chat-to-Shop section HTML injected into the page
+    const chatSectionHTML = `
+        <section class="chat-to-shop-section" id="chat-to-shop">
+            <div class="chat-to-shop-inner">
+                <div class="chat-to-shop-badge">
+                    <span class="badge-dot"></span>
+                    AI Stylist Online Now
+                </div>
+                <h2 class="chat-to-shop-title">
+                    Browse Jewellery the <em>Smart Way</em>
+                </h2>
+                <p class="chat-to-shop-subtitle">
+                    Skip the endless scrolling. Just describe your occasion, outfit, or mood &mdash; our AI Stylist will handpick the perfect pieces for you in seconds.
+                </p>
+                <button class="chat-to-shop-cta" id="chat-section-open-btn">
+                    <span class="chat-cta-icon"><i class="fas fa-wand-magic-sparkles"></i></span>
+                    Start Chatting &amp; Discover Jewellery
+                </button>
+                <div class="chat-to-shop-features">
+                    <div class="chat-feature-pill"><i class="fas fa-bolt"></i> Instant Recommendations</div>
+                    <div class="chat-feature-pill"><i class="fas fa-camera"></i> Upload Your Outfit</div>
+                    <div class="chat-feature-pill"><i class="fas fa-gem"></i> Curated Just For You</div>
+                    <div class="chat-feature-pill"><i class="fas fa-heart"></i> Style Advice Included</div>
+                </div>
+            </div>
+        </section>
     `;
 
     document.addEventListener('DOMContentLoaded', () => {
         document.body.insertAdjacentHTML('beforeend', widgetHTML);
+
+        // Inject the Chat-to-Shop section into the page (before the about section)
+        const aboutSection = document.getElementById('about');
+        if (aboutSection) {
+            aboutSection.insertAdjacentHTML('beforebegin', chatSectionHTML);
+        } else {
+            // Fallback: append before footer
+            const footer = document.querySelector('footer');
+            if (footer) footer.insertAdjacentHTML('beforebegin', chatSectionHTML);
+        }
+
         initWidget();
     });
 
@@ -85,6 +151,15 @@
         const sendBtn = document.getElementById('zewar-chat-send');
         const messagesContainer = document.getElementById('zewar-chat-messages');
 
+        // New elements
+        const tooltip = document.getElementById('zewar-chat-tooltip');
+        const tooltipDismiss = tooltip ? tooltip.querySelector('.tooltip-dismiss') : null;
+        const notifBadge = document.getElementById('zewar-chat-notif-badge');
+        const stickyBar = document.getElementById('zewar-chat-sticky-bar');
+        const stickyOpenBtn = document.getElementById('zewar-sticky-open-btn');
+        const stickyDismiss = document.getElementById('zewar-sticky-dismiss');
+        const chatSectionBtn = document.getElementById('chat-section-open-btn');
+
         // Image elements
         const uploadBtn = document.getElementById('zewar-chat-upload-btn');
         const fileInput = document.getElementById('zewar-chat-file-input');
@@ -92,27 +167,103 @@
         const previewImg = document.getElementById('zewar-chat-image-preview');
         const removeImgBtn = document.getElementById('zewar-chat-image-remove');
 
-        // Toggle chat
-        fab.addEventListener('click', () => {
-            isOpen = !isOpen;
-            fab.classList.toggle('active', isOpen);
-            panel.classList.toggle('open', isOpen);
-            if (isOpen) {
-                input.focus();
-                if (messagesContainer.children.length === 0) {
-                    showWelcome();
-                }
-                startPlaceholderRotation(input);
-            } else {
-                stopPlaceholderRotation();
+        // --- Helper: open chat ---
+        function openChat() {
+            if (isOpen) return;
+            isOpen = true;
+            fab.classList.add('active');
+            panel.classList.add('open');
+            document.body.classList.add('chat-sidebar-open'); // Shift body
+            // Hide tooltip, badge, sticky bar when chat is opened
+            if (tooltip) tooltip.classList.add('hidden');
+            if (notifBadge) notifBadge.classList.add('hidden');
+            if (stickyBar) stickyBar.classList.add('hidden');
+            if (input) input.focus();
+            if (messagesContainer.children.length === 0) {
+                showWelcome();
             }
-        });
+            startPlaceholderRotation(input);
+        }
 
-        closeBtn.addEventListener('click', () => {
+        // --- Helper: close chat ---
+        function closeChat() {
             isOpen = false;
             fab.classList.remove('active');
             panel.classList.remove('open');
+            document.body.classList.remove('chat-sidebar-open'); // Restore body
             stopPlaceholderRotation();
+        }
+
+        // Toggle chat via FAB
+        fab.addEventListener('click', () => {
+            if (isOpen) {
+                closeChat();
+            } else {
+                openChat();
+            }
+        });
+
+        closeBtn.addEventListener('click', closeChat);
+
+        // Chat section CTA button
+        if (chatSectionBtn) {
+            chatSectionBtn.addEventListener('click', openChat);
+        }
+
+        // Sticky bar open button
+        if (stickyOpenBtn) {
+            stickyOpenBtn.addEventListener('click', openChat);
+        }
+
+        // Sticky bar dismiss
+        if (stickyDismiss) {
+            stickyDismiss.addEventListener('click', () => {
+                if (stickyBar) stickyBar.classList.add('hidden');
+            });
+        }
+
+        // Tooltip dismiss
+        if (tooltipDismiss) {
+            tooltipDismiss.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (tooltip) tooltip.classList.add('hidden');
+            });
+        }
+
+        // Click tooltip to open chat
+        if (tooltip) {
+            tooltip.addEventListener('click', openChat);
+        }
+
+        // Auto-open chat immediately on page load (for desktop)
+        const hasOpenedBefore = sessionStorage.getItem('zewar_chat_opened');
+        if (window.innerWidth > 768) {
+            // Desktop: Auto-open immediately
+            setTimeout(() => {
+                openChat();
+                sessionStorage.setItem('zewar_chat_opened', '1');
+            }, 500);
+        } else if (!hasOpenedBefore) {
+            // Mobile first visit: Show tooltip after 2s, auto-open after 8s
+            setTimeout(() => {
+                if (!isOpen && tooltip) {
+                    tooltip.classList.remove('hidden');
+                }
+            }, 2000);
+            setTimeout(() => {
+                if (!isOpen) {
+                    openChat();
+                    sessionStorage.setItem('zewar_chat_opened', '1');
+                }
+            }, 8000);
+        } else {
+            // Not first visit — hide tooltip
+            if (tooltip) tooltip.classList.add('hidden');
+        }
+
+        // Mark opened in session when user opens
+        fab.addEventListener('click', () => {
+            sessionStorage.setItem('zewar_chat_opened', '1');
         });
 
         // Send on Enter
@@ -165,10 +316,7 @@
         // Close on Escape
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && isOpen) {
-                isOpen = false;
-                fab.classList.remove('active');
-                panel.classList.remove('open');
-                stopPlaceholderRotation();
+                closeChat();
             }
         });
     }
@@ -385,9 +533,12 @@
         container.className = 'zewar-chat-generated-image-container';
 
         container.innerHTML = `
-            <div class="generated-image-title"><i class="fas fa-sparkles"></i> ✨ AI Styling Concept Preview</div>
+            <div class="generated-image-title"><i class="fas fa-sparkles"></i> ✨ AI Style Inspiration</div>
             <img src="${url}" class="zewar-generated-img" alt="AI Styling Preview"
                  onerror="this.parentElement.remove()">
+            <div style="font-size: 0.7rem; color: #888; margin-top: 5px; text-align: center; font-style: italic;">
+                Note: This is an AI-generated style concept. The jewelry shown is a generic representation, not the actual product.
+            </div>
         `;
 
         const img = container.querySelector('img');
@@ -487,4 +638,23 @@
         div.textContent = str || '';
         return div.innerHTML;
     }
+
+    // Expose a global function to send a prompt to the chat externally
+    window.sendZewarPrompt = function(promptText) {
+        const fab = document.getElementById('zewar-chat-fab');
+        const input = document.getElementById('zewar-chat-input');
+        const sendBtn = document.getElementById('zewar-chat-send');
+        
+        if (fab && !fab.classList.contains('active')) {
+            fab.click(); // Open the chat if it's closed
+        }
+        
+        if (input && sendBtn) {
+            // Wait briefly for animation if opening
+            setTimeout(() => {
+                input.value = promptText;
+                sendBtn.click();
+            }, 100);
+        }
+    };
 })();

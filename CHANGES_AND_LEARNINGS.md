@@ -138,3 +138,13 @@ This document records the incremental features, structural fixes, debugging path
 * **Shopping Cart Persistence**: Checked `localStorage` integration in `script.js` — functions perfectly. Out-of-stock boundary alerts enforce correct checkout constraints.
 * **CORS Policy Header Alignment**: Confirmed Netlify hostnames (`thezewarboutique.netlify.app` / `zewar-boutique.netlify.app`) are mapped explicitly inside the server's allowed origins list.
 * **SPA Routing Fallback**: Tested `netlify.toml` redirects. All virtual directory path lookups redirect correctly to `index.html` without throwing server 404s.
+
+### 11. AI Image Hallucination Fix (Disclaimer)
+* **Issue**: The AI image generation for outfit previews (via Pollinations.ai) hallucinated generic jewelry designs, causing a discrepancy with the actual Zewar Boutique product being shown.
+* **Root Cause**: Generic text-to-image AI models lack awareness of specific boutique inventory without a fine-tuned LoRA or Virtual Try-On pipeline.
+* **Solution**: Updated the UI to reflect realistic expectations by changing the image title to "AI Style Inspiration" and adding a disclaimer clarifying that the image is a generic representation, not the actual product.
+
+### 12. Fixed UI Overlap with Persistent Chat Sidebar
+* **Issue**: When the new permanent 35% chat sidebar was open, the top navigation bar and shopping cart drawer overlapped with or hid behind the chat panel.
+* **Root Cause**: The `body` element shrank correctly via `margin-right: 35%`, but fixed elements (`position: fixed`) like the navbar and cart drawer were anchored to the viewport boundaries, causing them to span 100% width or open behind the panel.
+* **Solution**: Updated `chat-widget.css` to dynamically apply `width: 65%` to the `.navbar` and `right: 35%` to `.cart-drawer.open` when `body.chat-sidebar-open` is active, ensuring proper alignment.

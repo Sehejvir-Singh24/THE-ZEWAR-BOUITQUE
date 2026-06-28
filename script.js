@@ -685,6 +685,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             addBtn.style.color = '#333';
                         }
                         
+                        // Update AI Stylist Prompts dynamically
+                        const safeTitle = product.title.replace(/'/g, "\\'");
+                        const btnStyle = document.getElementById('prompt-btn-style');
+                        if (btnStyle) btnStyle.setAttribute('onclick', `if(window.sendZewarPrompt) window.sendZewarPrompt('How should I style the ${safeTitle}?')`);
+                        
+                        const btnOccasion = document.getElementById('prompt-btn-occasion');
+                        if (btnOccasion) btnOccasion.setAttribute('onclick', `if(window.sendZewarPrompt) window.sendZewarPrompt('What occasions is the ${safeTitle} best for?')`);
+                        
+                        const btnMatch = document.getElementById('prompt-btn-match');
+                        if (btnMatch) btnMatch.setAttribute('onclick', `if(window.sendZewarPrompt) window.sendZewarPrompt('Will the ${safeTitle} match a red saree?')`);
+                        
                         const images = product.images && product.images.length > 0 ? product.images : [product.image];
                         const mainImg = document.getElementById('main-product-img');
                         const thumbContainer = document.querySelector('.pdp-thumbnails');

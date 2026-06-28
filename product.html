@@ -65,6 +65,24 @@
 
                     <button class="btn btn-primary pdp-add-cart" onclick="addToCart('pdp-01', 'Royal Emerald Kundan Choker', 299.00, 'https://images.unsplash.com/photo-1599643477877-530eb83abc8e?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80')">Add to Cart</button>
 
+                    <!-- AI Stylist Prompts -->
+                    <div id="ai-stylist-prompts" style="margin: 2rem 0; padding: 1.5rem; background: rgba(212,175,55,0.05); border: 1px solid rgba(212,175,55,0.2); border-radius: 12px;">
+                        <h4 style="font-family: var(--font-heading); color: var(--primary-color); margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-wand-magic-sparkles"></i> Ask the AI Stylist
+                        </h4>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <button id="prompt-btn-style" onclick="if(window.sendZewarPrompt) window.sendZewarPrompt('How should I style this?')" style="text-align: left; background: rgba(10,10,10,0.8); border: 1px solid rgba(255,255,255,0.1); color: #ccc; padding: 10px 15px; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-family: var(--font-body); font-size: 0.85rem;" onmouseover="this.style.borderColor='rgba(212,175,55,0.5)'; this.style.color='#fff';" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='#ccc';">
+                                How to style this? <i class="fas fa-chevron-right" style="float: right; font-size: 0.7rem; margin-top: 3px;"></i>
+                            </button>
+                            <button id="prompt-btn-occasion" onclick="if(window.sendZewarPrompt) window.sendZewarPrompt('What occasions is this best for?')" style="text-align: left; background: rgba(10,10,10,0.8); border: 1px solid rgba(255,255,255,0.1); color: #ccc; padding: 10px 15px; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-family: var(--font-body); font-size: 0.85rem;" onmouseover="this.style.borderColor='rgba(212,175,55,0.5)'; this.style.color='#fff';" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='#ccc';">
+                                Occasion recommendations <i class="fas fa-chevron-right" style="float: right; font-size: 0.7rem; margin-top: 3px;"></i>
+                            </button>
+                            <button id="prompt-btn-match" onclick="if(window.sendZewarPrompt) window.sendZewarPrompt('Will this match a red saree?')" style="text-align: left; background: rgba(10,10,10,0.8); border: 1px solid rgba(255,255,255,0.1); color: #ccc; padding: 10px 15px; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-family: var(--font-body); font-size: 0.85rem;" onmouseover="this.style.borderColor='rgba(212,175,55,0.5)'; this.style.color='#fff';" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='#ccc';">
+                                Will this match a red saree? <i class="fas fa-chevron-right" style="float: right; font-size: 0.7rem; margin-top: 3px;"></i>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Accordions -->
                     <div class="accordion-container">
                         <div class="accordion-item">
