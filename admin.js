@@ -2,7 +2,8 @@ const API = (window.BACKEND_URL || '') + '/api';
 let chartInstance;
 
 window.login = function() {
-    if (document.getElementById('admin-password').value === 'zewar123') {
+    // SECURITY WARNING: Frontend password validation is insecure. For a public portfolio, we use 'demo'.
+    if (document.getElementById('admin-password').value === 'demo') {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('admin-dashboard').style.display = 'flex';
         initDashboard();
