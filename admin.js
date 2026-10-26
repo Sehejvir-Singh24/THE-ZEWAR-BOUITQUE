@@ -13,17 +13,59 @@ window.login = function() {
     }
 }
 
+window.toggleSidebar = function() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (!sidebar) return;
+    sidebar.classList.toggle('open');
+    if (overlay) overlay.classList.toggle('active', sidebar.classList.contains('open'));
+};
+
+window.closeSidebar = function() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
+};
+
 window.switchTab = function(tabId, event) {
     document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
-    document.getElementById('tab-' + tabId).classList.add('active');
+    document.querySelectorAll('.bottom-nav-item').forEach(el => el.classList.remove('active'));
     
-    if(event) {
-        event.currentTarget.classList.add('active');
-        document.getElementById('page-title').textContent = event.currentTarget.textContent.trim() + ' Management';
-        if(tabId === 'dashboard') document.getElementById('page-title').textContent = 'Dashboard Overview';
+    const targetPane = document.getElementById('tab-' + tabId);
+    if (targetPane) targetPane.classList.add('active');
+    
+    // Highlight sidebar item
+    const tabIndices = { 'dashboard': 0, 'products': 1, 'orders': 2, 'customers': 3, 'promotions': 4 };
+    const navItems = document.querySelectorAll('.nav-links li');
+    if (tabIndices[tabId] !== undefined && navItems[tabIndices[tabId]]) {
+        navItems[tabIndices[tabId]].classList.add('active');
     }
-}
+
+    // Highlight mobile bottom nav item
+    const bottomItem = document.querySelector(`.bottom-nav-item[data-tab="${tabId}"]`);
+    if (bottomItem) bottomItem.classList.add('active');
+
+    // Update Header title
+    const titleMap = {
+        'dashboard': 'Dashboard Overview',
+        'products': 'Inventory Management',
+        'orders': 'Orders Tracking',
+        'customers': 'Customer CRM',
+        'promotions': 'Promotions'
+    };
+    if (document.getElementById('page-title') && titleMap[tabId]) {
+        document.getElementById('page-title').textContent = titleMap[tabId];
+    }
+    
+    // Automatically close mobile sidebar drawer
+    closeSidebar();
+
+    // Scroll back to top on tab switch
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) mainContent.scrollTop = 0;
+};
 
 async function initDashboard() {
     try {
@@ -310,7 +352,7 @@ window.deletePromo = async (id) => { if(confirm('Delete promo?')) { await fetch(
 let posProductsRaw = [];
 window.openPOSModal = async function() {
     document.getElementById('pos-modal-overlay').classList.add('active');
-    document.getElementById('pos-modal').style.display = 'block';
+    document.getElementById('pos-modal').style.display = 'flex';
     
     const custRes = await fetch(`${API}/customers`);
     const customers = await custRes.json();
