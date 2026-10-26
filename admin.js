@@ -3,7 +3,8 @@ let chartInstance;
 
 window.login = function() {
     // SECURITY WARNING: Frontend password validation is insecure. For a public portfolio, we use 'demo'.
-    if (document.getElementById('admin-password').value === 'demo') {
+    const val = document.getElementById('admin-password').value.trim();
+    if (val === 'zewar123' || val === 'demo') {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('admin-dashboard').style.display = 'flex';
         initDashboard();
